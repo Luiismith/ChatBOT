@@ -1889,24 +1889,30 @@ jQuery.extend(Drupal.settings, {"basePath":"\/","pathPrefix":"","ajaxPageState":
 			let divChat = document.createElement("div");
 			let champText = document.createElement("input");
 			let boutonChat = document.createElement("button");
-			boutonChat.innerText = "Cliquez la";
+			let reponse = document.createElement("p");
+
+			boutonChat.innerText = "Envoyer votre question";
 			divChat.appendChild(boutonChat);
 
 			document.body.append(champText);
 			document.body.append(divChat);
 
-			boutonChat.onclick = function() { 
+			let question, reponses;
 
-				  let question = champText.value;
-				  let reponses = [];
+			boutonChat.addEventListener('click', function(){
 
-				  if (isNaN(x) || x < 1 || x > 10) {
-				    text = "Input not valid";
+				  question = champText.value;
+				  reponses = [];
+
+				  if (question) {
+				    reponses = "Nous allons vous repondre";
+				    alert(reponses);
 				  } else {
-				    text = "Input OK";
+				    reponses = "Bonjour, veuillez nous posser une question";
+				    alert(reponses);
 				  }
-				  document.getElementById("demo").innerHTML = text;
-			}; 
+				  
+			}); 
 
 	</script>
 
