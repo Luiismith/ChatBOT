@@ -1,0 +1,34 @@
+/**
+ * Modèle du player : concerne principalement les changements d'états du player (welcome / video / end) et les panels
+ */
+/*global define*/
+define(["jquery"], function ($) {
+    'use strict';
+
+    var currentScreen,
+        currentPanel;
+
+    var PlayerModel = {
+        changeScreen: function (newScreen) {
+            if (currentScreen !== newScreen) {
+                $(this).triggerHandler("player_screen_changed", [newScreen, currentScreen]);
+                currentScreen = newScreen;
+            }
+            // when screen change occurs, remove any panel
+            this.togglePanel(null);
+        },
+
+        togglePanel: function (newPanel) {
+            if (currentPanel !== newPanel) {
+                $(this).triggerHandler("player_panel_changed", [newPanel, currentPanel]);
+                currentPanel = newPanel;
+            } else if (null !== currentPanel) {
+                // if current and new panels are the same, toggle to null
+                $(this).triggerHandler("player_panel_changed", [null, currentPanel]);
+                currentPanel = null;
+            }
+        }
+    };
+
+    return PlayerModel;
+});

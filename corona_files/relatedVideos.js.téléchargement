@@ -1,0 +1,27 @@
+/*global define*/
+define([
+    "jquery",
+    "app/model/videoTeaser"
+], function ($, videoTeaser) {
+    'use strict';
+
+    function parseLoaded(data) {
+        var i,
+            relatedVideos = [];
+        for (i = 0; i < data.length; i += 1) {
+            relatedVideos.push(videoTeaser.create(data[i]));
+        }
+
+        return relatedVideos;
+    };
+
+    var RelatedVideos = {
+        loadRelatedVideos: function(videoModel) {
+            $.getJSON("/player/related-videos/" + videoModel.videoId, function (data) {
+                $(RelatedVideos).triggerHandler("related_videos_loaded", [parseLoaded(data)]);
+            });
+        }
+    };
+
+    return RelatedVideos;
+});

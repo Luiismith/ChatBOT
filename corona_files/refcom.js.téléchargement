@@ -1,0 +1,252 @@
+(function ($) {
+
+  Drupal.behaviors.refcom = {
+    attach: function (context, settings) {
+
+      /* gestion des accordion*/
+      $(document).on("click", "[id^=\"accordion__heading-\"]", function (e) {
+        var accordionPanel = $("#" + $(this).attr("aria-controls"));
+        var smarttagClick = $(this).data('smarttag-click');
+        if($(this).attr("aria-expanded") == 'false')  {
+          $(this).attr("aria-expanded", "true");
+          accordionPanel.attr("aria-hidden", "false");
+          accordionPanel.removeAttr("hidden");
+          smarttagClick.name = smarttagClick.name.replace('_unfold','_fold');
+        }
+        else {
+          $(this).attr("aria-expanded", "false");
+          accordionPanel.attr("aria-hidden", "true");
+          accordionPanel.attr("hidden", "");
+          smarttagClick.name = smarttagClick.name.replace('_fold','_unfold');
+        }
+        $(this).attr('data-smarttag-click', JSON.stringify(smarttagClick));
+      });
+      $(document).on("keypress", "[id^=\"accordion__heading-\"]", function (e) {
+        e.preventDefault();
+        if(e.charCode === 32 || e.charCode == 13) {
+          $(this).trigger('click');
+        }
+      });
+
+
+      /* gestion du scroll top*/
+      $(document).on('click', '.scrollTop', function(e) {
+        $('html, body').animate({
+          scrollTop: "0px"
+        }, 800);
+      });
+
+      /*Gestion des cards Slider*/
+      /*iniCards definis la hauteur des cards sur la plus grande*/
+      function initCards (slickSlider) {
+        var slideHeight = 0;
+        var track = slickSlider.$slideTrack;
+        //console.log($(track).find(".ovqCard"));
+        $(track).find(".ovqCard").each(function (index, item) {
+          slideHeight = $(item).height() > slideHeight ? $(item).height() : slideHeight;
+          //console.log(slideHeight);
+        });
+        $(track).find(".ovqCard").css("height" , slideHeight);
+      }
+      /* Application de slick sur les diffrentes zone de Cards*/
+
+      $('.ovqCardList').each(function(index, item) {
+        $("#" +item.id).slick({
+          mobileFirst: true,
+          responsive: [
+            {
+              breakpoint: 961,
+              settings: "unslick",
+            },
+            {
+              breakpoint: 960,
+              settings: {
+                slide: "li",
+                dots: true,
+                infinite: false,
+                speed: 300,
+                slidesToShow: 1,
+                //adaptiveHeight: true,
+                onInit: initCards,
+                onReInit: initCards
+              }
+            }
+          ],
+        });
+      });
+
+
+      /*------------------------------- GESTION RECHERCHE-----------------------------------*/
+      $("#RefcomSearchText").on('change', function() {
+        $("#RefcomSearchButton").trigger('click');
+      });
+
+      $("#RefcomSearchButton").click(function(){ //Bouton "Lancer la recherche"
+        var RefcomSearchButtonValue = $("#RefcomSearchText").val();
+        if (RefcomSearchButtonValue){
+          window.location.assign('/les-actions-du-gouvernement/toutes-les-actions-du-gouvernement/search/'+RefcomSearchButtonValue);
+        }else{
+          window.location.assign('/les-actions-du-gouvernement/toutes-les-actions-du-gouvernement?tag=');
+        }
+      });
+
+      /*----------------------------------------GESTION DES FILTRES----------------------------------*/
+      var taxo=[];
+      var reponse = $(".selected").find('button');
+      var wsize = $(window).width();
+      var url = window.location.href;
+      var cpt;
+      var  button = '<svg margin="0" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink"><defs><polygon id="path-1" points="31.6666667 10.6833333 29.3166667 8.33333333 20 17.65 10.6833333 8.33333333 8.33333333 10.6833333 17.65 20 8.33333333 29.3166667 10.6833333 31.6666667 20 22.35 29.3166667 31.6666667 31.6666667 29.3166667 22.35 20"></polygon><rect id="path-3" x="0" y="0" width="83" height="83"></rect></defs><g id="UI-MVP" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g id="OVQ_LISTING_mobile_filters_selected" transform="translate(-324.000000, -44.000000)"><g id="ic_clear" transform="translate(316.000000, 36.000000)"><mask id="mask-2" fill="white"><use href="#path-1"></use></mask><g id="Mask"></g><g id="Colors/Black" mask="url(#mask-2)"><g transform="translate(-21.666667, -21.666667)"><mask id="mask-4" fill="white"><use href="#path-3"></use></mask><use id="Black" stroke="none" fill="#000000" fill-rule="evenodd" href="#path-3"></use></g></g></g></g></g></svg>'
+
+      function findSelected(){  /* gestion d'affichage des boutons valider et reset*/
+        reponse = $(".selected").find('button');
+        if(reponse.length > 0){
+          $('.ovq-filterBlock-valid button').prop('disabled', false);
+          if (wsize > 962) {
+            $('.ovq-filterBlock-item.ovq-filterBlock-clear').show().css('display', 'inline-block');
+          }
+        }
+        else{
+          $('.ovq-filterBlock-valid button').prop('disabled', true);
+          $('.ovq-filterBlock-item.ovq-filterBlock-clear').hide();
+        }
+      }
+      findSelected();
+      $(".ovq-filterBlock-btselect button").click(function(){ // action quand un filtre est selectionné
+        var $li = $(this).parents('li');
+        $li.toggleClass('selected');
+        findSelected();
+        var smarttagClick = $(this).data('smarttag-click');
+        if($li.hasClass('selected')) {
+          smarttagClick.name = smarttagClick.name.replace('_unchecked','_checked');
+        }
+        else {
+          smarttagClick.name = smarttagClick.name.replace('_checked','_unchecked');
+        }
+        $(this).attr('data-smarttag-click', JSON.stringify(smarttagClick));
+      });
+
+      $(".ovq-filterBlock-clear button").click(function(){ //bouton reset
+        if(reponse.length > 0) {
+          if (url.indexOf('les-actions-du-gouvernement/toutes-les-actions-du-gouvernement?tag=') !== -1) {
+            window.location.assign('/les-actions-du-gouvernement/toutes-les-actions-du-gouvernement?tag=');
+          } else {
+            $(".ovq-filterBlock-btselect").removeClass('selected');
+            $('.ovq-filterBlock-valid button').prop('disabled', true);
+            $('.ovq-filterBlock-item.ovq-filterBlock-clear').hide();
+          }
+        }
+      });
+
+      $(".ovq-filterBlock-valid button").click(function(){ //Bouton valider
+        findSelected();
+        var choix = $(".selected").find('button');
+        for(i=0; i< choix.length; i++){
+          taxo[i] = choix.eq(i).text();
+        }
+        window.location.assign('/les-actions-du-gouvernement/toutes-les-actions-du-gouvernement?tag=' + taxo);
+      });
+
+
+      function modalShow() { //Affichage de la modal
+        $('.showModal').click(function () {
+          $('.modal').addClass('ReactModalPortal'); // ajoute la class qui affiche la modal sur mobile
+          $('.modal').children('div').addClass('ReactModal__Overlay ReactModal__Overlay--after-open').css({'position': 'fixed', 'top': '0px', 'left': '0px', 'right': '0px', 'bottom': '0px'});
+          $('.ReactModal__Overlay--after-open').children('div').addClass('ReactModal__Content ReactModal__Content--after-open modalFilter');
+          $('div.thematique').replaceWith('<button class="close">' + button + '</button><p class="mobi ovq-filterBlock-title">Filtrer par thématique</p>');
+          $(".ovq-filterBlock-list").show();
+          $(".close").css('display','block');
+          $("body").addClass('ReactModal__Body--open');
+          $('.ovq-filterBlock-item.ovq-filterBlock-clear').css('display','none');
+        });
+      }
+
+      function filtreDesktop(){ // Affichage apres resize du navigateur de mobile => Desktop
+        $('.all_action.ovq-filterBlock-title').addClass('ovq-filterBlock-seeall').removeClass('ovq-filterBlock-title');
+        $(".action_gouv.ovq-filterBlock-title" ).show();
+        $('.ovq-filterBlock-list').css('display', 'block');
+        $('.ovq-filterBlock-clear.clearFilterMobi').css('display', 'none');
+        findSelected();
+        modalCloseDesktop();
+        $(".close").hide();
+        $(".ovq-filterBlock-list").show();
+      }
+
+      function modalCloseDesktop(){ //Fermeture automatique de la modal quand on se met en Desktop
+        $( ".mobi.ovq-filterBlock-title" ).remove();
+        $('.ReactModal__Overlay--after-open').children('div').removeClass('ReactModal__Content ReactModal__Content--after-open modalFilter');
+        $('.modal').children('div').removeClass('ReactModal__Overlay ReactModal__Overlay--after-open').css({'position':'inherit', 'inset': 'inherit'})
+        $( "body" ).removeClass('ReactModal__Body--open');
+        $('.modal').removeClass('ReactModalPortal');
+      }
+
+      function compteur() {  // Compte le nombre de filtre selectionnés
+        if (document.getElementsByClassName('thematique').length == 0) {
+          url = decodeURI(url);
+          var base;
+          var base_url = window.location.origin;
+          cat = []
+          if (url === base_url + '/les-actions-du-gouvernement'
+            || url === base_url + 'les-actions-du-gouvernement/toutes-les-actions-du-gouvernement?tag='
+            || url === base_url + 'les-actions-du-gouvernement/toutes-les-actions-du-gouvernement') {
+            cpt = 0;
+          } else if (url.indexOf('les-actions-du-gouvernement/toutes-les-actions-du-gouvernement?tag=') !== -1) {
+            base = url.replace('/les-actions-du-gouvernement/toutes-les-actions-du-gouvernement?tag=', '');
+            liste_cat = base.replace(base_url, '');
+            cat = liste_cat.split(',');
+
+            if (cat[0] !== "") {
+              cpt = cat.length;
+            } else {
+              cpt = 0;
+            }
+          }
+        }
+      }
+
+      function modalResponsive(){ //Afficahge du filtre en format mobile
+        if (document.getElementsByClassName('thematique').length == 0) {
+          compteur();
+          $('<div class="thematique"><button class="showModal">Afficher par thématiques<span>'+cpt+'</span></button></div>').insertBefore('.ovq-filterBlock-list.filtre');
+        }
+        $(".action_gouv.ovq-filterBlock-title" ).hide();
+        $('.all_action.ovq-filterBlock-seeall').addClass('ovq-filterBlock-title ').removeClass('ovq-filterBlock-seeall');
+        $('.ovq-filterBlock-list').hide();
+        $('.ovq-filterBlock-item.ovq-filterBlock-clear').hide();
+        $('.ovq-filterBlock-clear.clearFilterMobi').css('display', 'block');
+        modalShow();
+      }
+
+      function modalClose(){ // action à la fermeture de la modal
+        $(".ovq-filterBlock").on('click', ".close", function() {
+          modalCloseDesktop();
+          $( ".ovq-filterBlock-list" ).hide();
+          $(".close").css('display','none');
+          compteur();
+          $(this).replaceWith('<div class="thematique"><button class="showModal">Afficher par thématiques<span>'+cpt+'</span></button></div>');
+          modalShow();
+        });
+      }
+
+      /*----------Gestion window resize-----------------------------*/
+
+      if (wsize <= 962) {
+        modalResponsive();
+        modalClose();
+      }
+
+      $(window).resize(function() {
+        wsize = $(window).width();
+        if (wsize <= 962) {
+          modalResponsive();
+          modalClose();
+        }
+        else {
+          filtreDesktop();
+        }
+
+      });
+    }
+  }
+
+}(jQuery));

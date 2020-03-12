@@ -1,0 +1,123 @@
+/*global define*/
+define([
+    "jquery",
+    "lib/timeFormatter"
+], function ($, timeFormatter) {
+    'use strict';
+
+    // this is a generic default image
+    var defaultImage = "http://www.gouvernement.fr/sites/all/themes/custom/matignon/img/header/marianne.png",
+        hasSubtitles = false,
+        currentSubtitles = null,
+        captions,
+        currentTime = 0,
+        bitRate = null,
+        VideoModel = {};
+
+    // Language names for subtitles
+    var languageNames = {"aa":"Afar","ab":"\u0430\u04a7\u0441\u0443\u0430 \u0431\u044b\u0437\u0448\u04d9\u0430","ae":"Avestan","af":"Afrikaans","ak":"Akan","am":"\u12a0\u121b\u122d\u129b","ar":"\u0627\u0644\u0639\u0631\u0628\u064a\u0629","as":"Assamese","av":"Avar","ay":"Aymara","az":"az\u0259rbaycan","ba":"Bashkir","be":"\u0411\u0435\u043b\u0430\u0440\u0443\u0441\u043a\u0430\u044f","bg":"\u0411\u044a\u043b\u0433\u0430\u0440\u0441\u043a\u0438","bh":"Bihari","bi":"Bislama","bm":"Bamanankan","bn":"Bengali","bo":"Tibetan","br":"Breton","bs":"Bosanski","ca":"Catal\u00e0","ce":"Chechen","ch":"Chamorro","co":"Corsican","cr":"Cree","cs":"\u010ce\u0161tina","cu":"Old Slavonic","cv":"Chuvash","cy":"Cymraeg","da":"Dansk","de":"Deutsch","dv":"Maldivian","dz":"Bhutani","ee":"\u0190\u028b\u025b","el":"\u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac","en":"English","eo":"Esperanto","es":"Espa\u00f1ol","et":"Eesti","eu":"Euskera","fa":"\u0641\u0627\u0631\u0633\u06cc","ff":"Fulfulde","fi":"Suomi","fj":"Fiji","fo":"Faeroese","fr":"Fran\u00e7ais","fy":"Frysk","ga":"Gaeilge","gd":"Scots Gaelic","gl":"Galego","gn":"Guarani","gu":"Gujarati","gv":"Manx","ha":"Hausa","he":"\u05e2\u05d1\u05e8\u05d9\u05ea","hi":"\u0939\u093f\u0928\u094d\u0926\u0940","ho":"Hiri Motu","hr":"Hrvatski","ht":"Haitian Creole","hu":"Magyar","hy":"\u0540\u0561\u0575\u0565\u0580\u0565\u0576","hz":"Herero","ia":"Interlingua","id":"Bahasa Indonesia","ie":"Interlingue","ig":"Igbo","ik":"Inupiak","is":"\u00cdslenska","it":"Italiano","iu":"Inuktitut","ja":"\u65e5\u672c\u8a9e","jv":"Javanese","ka":"Georgian","kg":"Kongo","ki":"Kikuyu","kj":"Kwanyama","kk":"\u049a\u0430\u0437\u0430\u049b","kl":"Greenlandic","km":"Cambodian","kn":"\u0c95\u0ca8\u0ccd\u0ca8\u0ca1","ko":"\ud55c\uad6d\uc5b4","kr":"Kanuri","ks":"Kashmiri","ku":"Kurd\u00ee","kv":"Komi","kw":"Cornish","ky":"\u041a\u044b\u0440\u0433\u044b\u0437\u0447\u0430","la":"Latina","lb":"Luxembourgish","lg":"Luganda","ln":"Lingala","lo":"Laothian","lt":"Lietuvi\u0173","lv":"Latvie\u0161u","mg":"Malagasy","mh":"Marshallese","mi":"M\u0101ori","mk":"\u041c\u0430\u043a\u0435\u0434\u043e\u043d\u0441\u043a\u0438","ml":"\u0d2e\u0d32\u0d2f\u0d3e\u0d33\u0d02","mn":"Mongolian","mo":"Moldavian","mr":"Marathi","ms":"Bahasa Melayu","mt":"Malti","my":"Burmese","na":"Nauru","nd":"North Ndebele","ne":"Nepali","ng":"Ndonga","nl":"Nederlands","nb":"Bokm\u00e5l","nn":"Nynorsk","nr":"South Ndebele","nv":"Navajo","ny":"Chichewa","oc":"Occitan","om":"Oromo","or":"Oriya","os":"Ossetian","pa":"Punjabi","pi":"Pali","pl":"Polski","ps":"\u067e\u069a\u062a\u0648","pt":"Portuguese, International","qu":"Quechua","rm":"Rhaeto-Romance","rn":"Kirundi","ro":"Rom\u00e2n\u0103","ru":"\u0420\u0443\u0441\u0441\u043a\u0438\u0439","rw":"Kinyarwanda","sa":"Sanskrit","sc":"Sardinian","sd":"Sindhi","se":"Northern Sami","sg":"Sango","sh":"Serbo-Croatian","si":"\u0dc3\u0dd2\u0d82\u0dc4\u0dbd","sk":"Sloven\u010dina","sl":"Sloven\u0161\u010dina","sm":"Samoan","sn":"Shona","so":"Somali","sq":"Shqip","sr":"\u0421\u0440\u043f\u0441\u043a\u0438","ss":"Siswati","st":"Sesotho","su":"Sudanese","sv":"Svenska","sw":"Kiswahili","ta":"\u0ba4\u0bae\u0bbf\u0bb4\u0bcd","te":"\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41","tg":"Tajik","th":"\u0e20\u0e32\u0e29\u0e32\u0e44\u0e17\u0e22","ti":"Tigrinya","tk":"Turkmen","tl":"Tagalog","tn":"Setswana","to":"Tonga","tr":"T\u00fcrk\u00e7e","ts":"Tsonga","tt":"Tatar\u00e7a","tw":"Twi","ty":"Tahitian","ug":"Uyghur","uk":"\u0423\u043a\u0440\u0430\u0457\u043d\u0441\u044c\u043a\u0430","ur":"\u0627\u0631\u062f\u0648","uz":"o'zbek","ve":"Venda","vi":"Ti\u1ebfng Vi\u1ec7t","wo":"Wolof","xh":"isiXhosa","yi":"Yiddish","yo":"Yor\u00f9b\u00e1","za":"Zhuang","zu":"isiZulu"};
+
+    function setData(videoDatas) {
+        VideoModel.assetId = videoDatas.asset_id;
+        VideoModel.dmId = videoDatas.dm_id;
+        VideoModel.title = videoDatas.title;
+        if (videoDatas.description) {
+            VideoModel.description = videoDatas.description;
+        } else {
+            VideoModel.description = "";
+        }
+        var dateElements = videoDatas.date.substr(0, 10).split("-");
+        VideoModel.date = new Date();
+        VideoModel.date.setFullYear(dateElements[0]);
+        VideoModel.date.setMonth(parseInt(dateElements[1])-1);
+        VideoModel.date.setDate(dateElements[2]);
+        VideoModel.duration = parseInt(videoDatas.duration, 10) * 0.001;
+        VideoModel.formattedDuration = timeFormatter.formatHmsTime(VideoModel.duration);
+        VideoModel.largeThumbnailUrl = videoDatas.thumbnail;
+        VideoModel.shareUrl = videoDatas.share_url;
+        VideoModel.endscreen = videoDatas.endscreen;
+        VideoModel.embedCode = '<iframe src="' + videoDatas.player_iframe_url + '" width="560" height="315" frameborder="0" allowfullscreen></iframe>';
+
+        VideoModel.atInternetCode = videoDatas.xtn2;
+        // Subtitles (captions)
+        captions = {};
+        var hasSubtitles;
+        for (var lang in videoDatas.captions) {
+            captions[lang] = ({languageCode: lang, label: VideoModel.getLanguageName(lang), url: videoDatas.captions[lang]});
+            hasSubtitles = true;
+        }
+        if (hasSubtitles) {
+            try {
+                currentSubtitles = localStorage.getItem("preferred_subtitles");
+            } catch (error) {}
+        }
+        $(VideoModel).triggerHandler("video_changed");
+    }
+
+    VideoModel = {
+        load: function (videoId) {
+            var url;
+            if (videoId) {
+                this.videoId = videoId;
+            }
+            url = "/player/video-datas/" + this.videoId;
+            $.getJSON(url, function (data) {
+                setData(data);
+            });
+            $(this).triggerHandler("video_load");
+        },
+        setData: setData,
+        hasSubtitles: function () {
+            return hasSubtitles;
+        },
+        getCurrentSubtitles: function () {
+            return captions[currentSubtitles] || null;
+        },
+        getSubtitlesCollection: function(){
+            return captions;
+        },
+        changeSubtitles: function (languageCode) {
+            currentSubtitles = languageCode;
+            $(VideoModel).triggerHandler("subtitles_changed", [currentSubtitles]);
+            try {
+                localStorage.setItem("preferred_subtitles", currentSubtitles);
+            } catch (error){}
+        },
+        getLanguageName: function (languageCode) {
+            return languageNames[languageCode] || languageCode;
+        },
+        setState: function (state){
+            $(this).triggerHandler("video_state_changed", [state]);
+        },
+        setTime: function (time){
+            currentTime = time;
+            $(this).triggerHandler("video_progress", [time]);
+        },
+        setFullScreen: function (fullScreen){
+            if (fullScreen) {
+                $(this).triggerHandler("video_full_screen_enter");
+            } else {
+                $(this).triggerHandler("video_full_screen_leave");
+            }
+        },
+        setVolume: function (currentVolume){
+            $(this).triggerHandler("video_volume", [currentVolume]);
+        },
+        getPosition: function () {
+            return currentTime;
+        },
+        setBitRate: function (currentBitRate) {
+            bitRate = currentBitRate;
+            console.log(currentBitRate);
+        },
+        getBitRate: function () {
+            return bitRate;
+        },
+        title: "",
+        description: "",
+        largeThumbnailUrl: defaultImage,
+        autoPlay: false
+    };
+
+    return VideoModel;
+});

@@ -1,0 +1,17 @@
+/*global define*/
+define([
+], function () {
+    'use strict';
+
+    var VideoTeaser = {
+        create: function (rawData) {
+            return {
+                videoId: rawData.asset_id,
+                title: rawData.title,
+                smallThumbnailUrl: rawData.thumbnail
+            };
+        }
+    };
+
+    return VideoTeaser;
+});

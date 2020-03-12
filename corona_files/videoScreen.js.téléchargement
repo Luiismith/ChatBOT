@@ -1,0 +1,61 @@
+/*global define*/
+define([
+    "jquery",
+    "app/view/playerAdapter",
+    "app/model/player",
+    "app/model/video",
+    "app/collection/relatedVideos"
+], function ($, playerAdapter, playerModel, videoModel, relatedVideosModel) {
+    'use strict';
+
+    var $videoScreen,
+        screenOnComplete = "end";
+
+    function setScreenOnComplete(screenName) {
+        screenOnComplete = screenName;
+    }
+
+    function onPlayerScreenChanged(event, currentScreen) {
+        if ("video" === currentScreen
+                || "welcome" === currentScreen) {
+            $videoScreen.show();
+        } else {
+            $videoScreen.hide();
+        }
+        if ("welcome" === currentScreen) {
+            playerAdapter.pause();
+        }
+    }
+    function onVideoChanged(event) {
+        if (videoModel.endscreen) {
+            screenOnComplete = "end";
+        } else {
+            screenOnComplete = "welcome";
+        }
+        playerAdapter.load(videoModel);
+    }
+
+    function onVideoStateChanged(event, state) {
+        switch (state) {
+            case "ready":
+                $videoScreen.show();
+                break;
+            case "play":
+                playerModel.changeScreen("video");
+                break;
+            case "complete":
+                playerModel.changeScreen(screenOnComplete);
+                break;
+        }
+    }
+
+    return {
+        initialize: function () {
+            $videoScreen = $("#video-screen");
+            $(playerModel).on("player_screen_changed", onPlayerScreenChanged);
+            $(videoModel).on("video_state_changed", onVideoStateChanged);
+            $(videoModel).on("video_changed", onVideoChanged);
+        },
+        setScreenOnComplete: setScreenOnComplete
+    };
+});

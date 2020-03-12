@@ -1,0 +1,65 @@
+/*global define*/
+define([
+    "jquery",
+    "app/model/video"
+], function($, videoModel){
+    'use strict';
+
+    var $menuSubtitles,
+        $select;
+
+    function onVideoChanged() {
+        if (videoModel.hasSubtitles()) {
+            var $options = $select.find("option");
+            var i;
+            for (i=0; i < $options.length; i += 1) {
+                // remove all options except default and none
+                if ("default" !== $options[i].value && "none" !== $options[i].value) {
+                    $($options.get(i)).remove();
+                }
+            }
+            var subtitlesCollection = videoModel.getSubtitlesCollection();
+            // use select option "none" as template
+            var $template = $menuSubtitles.find("select option[value='none']");
+            var $newOption;
+            for (i in subtitlesCollection) {
+                $newOption = $template.clone();
+                if (null !== videoModel.getCurrentSubtitles()
+                    && videoModel.getCurrentSubtitles().languageCode === subtitlesCollection[i].languageCode) {
+                    $newOption.attr("selected", "selected");
+                }
+                $newOption
+                    .val(subtitlesCollection[i].languageCode)
+                    .text(subtitlesCollection[i].label)
+                    .appendTo($select);
+            }
+            $menuSubtitles.show();
+        } else {
+            $menuSubtitles.hide();
+        }
+    }
+
+    function onSubtitlesChanged() {
+        if ("default" !== $select.val()) {
+            if ("none" === $select.val()) {
+                videoModel.changeSubtitles(null);
+            } else {
+                videoModel.changeSubtitles($select.val());
+            }
+        }
+    }
+
+    function onSubtitlesChangedFromModel(event, language) {
+        $select.val(language);
+    }
+
+    return {
+        initialize: function() {
+            $menuSubtitles = $("#menu-subtitles");
+            $select = $menuSubtitles.find("select");
+            $select.on("change", onSubtitlesChanged);
+            $(videoModel).on("video_changed", onVideoChanged);
+            $(videoModel).on("subtitles_changed", onSubtitlesChangedFromModel);
+        }
+    }
+});

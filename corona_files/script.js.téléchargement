@@ -1,0 +1,2433 @@
+(function() {
+
+  // Déclaration des variables.
+  var $, Agenda, Bouton, delay,
+
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+  // jQuery.
+  $ = this.jQuery;
+
+  // Fonction utilitaire pour ajouter un délai avant exécution.
+  delay = function(ms, func) {
+    return setTimeout(func, ms);
+  };
+
+/*
+  if( $( window  ).width() >= 960){
+    $('#got').maphilight();
+  }else{
+    $('#got').rwdImageMaps();
+  }
+*/
+
+/*
+$.fn.isOnScreen = function(){
+
+    var win = $(window);
+
+    var viewport = {
+        top : win.scrollTop(),
+        left : win.scrollLeft()
+    };
+    viewport.right = viewport.left + win.width();
+    viewport.bottom = viewport.top + win.height();
+
+    var bounds = this.offset();
+    bounds.right = bounds.left + this.outerWidth();
+    bounds.bottom = bounds.top + this.outerHeight();
+
+    return (!(viewport.right < bounds.left || viewport.left > bounds.right || viewport.bottom < bounds.top || viewport.top > bounds.bottom));
+
+};
+*/
+
+
+
+  // AGENDA MINISTRE ===========================================================
+  Agenda = (function() {
+
+    // Fonction d'initialisation.
+    function Agenda($element, options) {
+      // Bindings.
+      this.addButtons = __bind(this.addButtons, this);
+      this.offArrows = __bind(this.offArrows, this);
+      this.onArrows = __bind(this.onArrows, this);
+      this.initSlider = __bind(this.initSlider, this);
+      this.prev = __bind(this.prev, this);
+      this.next = __bind(this.next, this);
+      this.toggle = __bind(this.toggle, this);
+      this.showControls = __bind(this.showControls, this);
+      this.onAfterChange = __bind(this.onAfterChange, this);
+
+      // Récupération des options ou options par défaut.
+      this.options = options || {
+        slick: {}
+      };
+      // Paramètrage par défaut de la librairie slick.
+      this.options.slick.arrows = false;
+      this.options.slick.onInit = this.initSlider;
+      this.options.slick.onBeforeChange = this.onAfterChange;
+
+      // Agenda statique par défaut.
+      this.status = 0;
+      this.$el = $element;
+
+      // Ajout des boutons de navigation.
+      this.addButtons();
+      // Activation de l'agenda.
+      this.toggle();
+
+      // Au clic sur le bouton en bas de l'agenda, "activer / désactiver" le
+      // slider.
+      this.$toggle.on('click', this.toggle);
+
+    }
+
+    // Fonction exécutée après chaque navigation.
+    Agenda.prototype.onAfterChange = function(slider, current, next) {
+      // Contrôler l'affichage des flèches en fonction du contexte.
+      this.showControls(next, slider.slideCount);
+    };
+
+    // Contrôle l'affichage des flèches en fonction du contexte.
+    Agenda.prototype.showControls = function(index, count) {
+      // Afficher les flèches.
+      $('.slide-control').show();
+      // Si nous sommes sur la dernière slide, masquer la flèche "suivant".
+      if ((index + 1) === count) {
+        $('.slide-next').hide();
+      }
+      // Sur la première slide, masquer la flèche "précédent".
+      if (index === 0) {
+        $('.slide-prev').hide();
+      }
+    };
+
+    // Activer / Désactiver le slider.
+    Agenda.prototype.toggle = function(e) {
+      // Si l'appel de la fonction répond à une interaction, annuler le
+      // comportement par défaut.
+      if (e) {
+        e.preventDefault();
+      }
+
+      // Si le statut est positif on désactive le slider.
+      if (this.status) {
+        // Désactivation des liens "précédent / suivant".
+        this.offArrows();
+        // Suppression du slider.
+        this.$el.unslick();
+        // Changement d'état.
+        this.status = 0;
+        // Changement de libellé pour le bouton activer / désactiver.
+        this.$el.find('.slider-toggle-bouton').text(Drupal.t('View events by day'));
+
+      } else {
+
+        // Activation du slider.
+        this.$el.slick(this.options.slick);
+        // Affichage et activation des interactions sur les flèches.
+        this.onArrows();
+        // Changement d'état de l'objet.
+        this.status = 1;
+        // Changement de libellé pour le bouton activer / désactiver.
+        this.$el.find('.slider-toggle-bouton').text(Drupal.t('View all events'));
+        // On scroll au début de l'article pour gérer le problème d'affichage du toggle négatif
+        $('html, body').animate( { scrollTop: $('#content').offset().top}, 0 );
+
+      }
+    };
+
+    // Naviguer vers la slide suivante.
+    Agenda.prototype.next = function(e) {
+      e.preventDefault();
+      return this.$el.slickNext();
+    };
+
+    // Naviguer vers la slide précédente.
+    Agenda.prototype.prev = function(e) {
+      e.preventDefault();
+      return this.$el.slickPrev();
+    };
+
+    // Initiation du slider.
+    Agenda.prototype.initSlider = function(slider) {
+      var current,
+        _this = this;
+      // On repère le premier jour à afficher.
+      current = this.$el.find('.futur').first().index();
+      // On fait commencer le slider à cette slide après un léger délai.
+      delay(100, function() {
+        // On modifie l'option "speed" avant et après le mouvement pour le
+        // rendre imperceptible par le visiteur.
+        _this.$el.slickSetOption('speed', 0).slickGoTo(current).slickSetOption('speed', 300);
+      });
+      // On contrôle l'affichage ou la dissimulation des flèches en fonction du
+      // contexte.
+      this.showControls(current, slider.slideCount);
+    };
+
+    // Activation des interactions liées aux flèches.
+    Agenda.prototype.onArrows = function() {
+      this.$next.show().on('click', this.next);
+      this.$prev.show().on('click', this.prev);
+    };
+
+    // Désactivation des interactions liées aux flèches.
+    Agenda.prototype.offArrows = function() {
+      this.$next.hide().off('click', this.next);
+      this.$prev.hide().off('click', this.prev);
+    };
+
+    // Ajout des flèches à l'agenda et du bouton "activer / désactiver". Ces
+    // élément sont liés à javascript et ne doivent pas être affichés sinon.
+    Agenda.prototype.addButtons = function() {
+      // Flèche "précédent".
+      this.$prev = $('<a class="slide-control slide-prev">'+Drupal.t('Previous')+'</a>').appendTo(this.$el);
+      // Flèche "suivant".
+      this.$next = $('<a class="slide-control slide-next">'+Drupal.t('Next')+'</a>').appendTo(this.$el);
+      // Bouton activer / désactiver le slider.
+      this.$toggle = $('<a href="#" class="slider-toggle-bouton bouton call">'+Drupal.t('View all events')+'</a>').appendTo(this.$el);
+    };
+
+    return Agenda;
+
+  })();
+
+  highlightGot = (function() {
+
+    function highlightGot($element) {
+      this.usemap = $element.get(0).getAttribute('usemap');
+      if (!this.usemap) {
+        return
+      }
+
+      //position = $($element).offset();
+      position = $('.field-name-field-texte').offset();
+      ww = $($element).width();
+      hh = $($element).height();
+      ll = $($element).css('left');
+      //ll = ll.substr(0,ll.length-2);
+
+      tt = $($element).css('top');
+      header = $('header').height();
+      nav = $('nav').height();
+      var top = 'top:'+position.top-header-nav+'px;'
+      //var top = 'top:0px;'
+      var left = 'left:0px;'
+
+      if($('#maphighlight').length){
+        //$('#maphighlight')
+      }else{
+        $($element).before('<div id="maphighlight" style="position:absolute;z-index:9999;'+top+left+'width:'+ww+'px;height:'+hh+'px"></div>');
+      }
+
+
+      //$($element).before('<div id="highlight" style="width:'+$($element).width()+'px;height:'+$($element).height()+'px;background-color:red;position:absolute;z-index:999;left:'+position.left+'px;"></div>');
+      //$("#highlight").css({ opacity: 0.5 });
+      //top:'+position.top+'px
+
+      this.map = $('map[name="'+usemap.substr(1)+'"]');
+
+      $(this.map).find('area[coords]').each(function(index) {
+        var res = $(this).attr('coords').split(",");
+
+        x = res[0]; y = res[1];
+        w = res[2] - res[0];
+        h = res[3] - res[1];
+        var href = $(this).attr('href');
+
+        if($.browser.device = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent.toLowerCase())) ||  $( window  ).width() < 960){
+            if($('.highlight'+index).length){
+              $('.highlight'+index).css('background-image',"url(/sites/all/themes/custom/matignon/img/onw.png)");
+              x = 10;
+              w = ww -10;
+            }
+          }
+        if($('#maphighlight .highlight'+index).length){
+
+            $('.highlight'+index).css({width:w+'px', height:h+'px', top:y+'px', left:x+'px' })
+
+        }else{
+          $('#maphighlight').append('<div class="highlight'+index+'" data-href="'+href+'"  style="z-index:999;background-color:#eee;position:absolute;width:'+w+'px;height:'+h+'px;top:'+y+'px;left:'+x+'px;"></div>')
+          if($.browser.device = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent.toLowerCase())) ||  $( window  ).width() < 960){
+            if($('.highlight'+index).length){
+              $('.highlight'+index).css('background-image',"url(/sites/all/themes/custom/matignon/img/onw.png)");
+              x = 10;
+              w = ww -10;
+            }
+          }
+          $('.highlight'+index).css({ opacity: 0.3, cursor: "pointer" })
+          $('.highlight'+index).css('background-repeat','no-repeat');
+          $('.highlight'+index).css('background-position',"bottom right");
+
+
+          $('.highlight'+index).click(function(){
+            window.open($(this).attr('data-href'), '_blank');
+          })
+          $('.highlight'+index).mouseover(function(){
+            $(this).css({ opacity: 0.3, border: "1px solid  red"});
+            $(this).css('background-color', '#3B240B')
+            $(this).css('background-image',"url(/sites/all/themes/custom/matignon/img/onw.png)");
+          })
+          $('.highlight'+index).mouseout(function(){
+            $(this).css({ opacity: 0.3, border: "none"});
+            $(this).css('background-color', '#eee')
+            $(this).css('background-image',"none");
+
+          })
+        }
+      });
+
+
+    }
+
+    highlightGot.prototype.draw = function() {
+      $(map).find('area[coords]').each(function() {
+
+      });
+    }
+
+    return highlightGot;
+
+  })();
+
+    if($('#got').length){
+      $('#got').rwdImageMaps();
+      highlightGot($("#got"));
+      $( window ).resize(function() {
+        highlightGot($("#got"));
+      });
+    }
+
+      if($('.toggle-transcription')){
+        $('.texte-transcription').hide();
+        label_off = $('.toggle-transcription').attr('data-off');
+        label_on = $('.toggle-transcription').attr('data-on');
+        $('<a>',{
+          text: label_on,
+          title: label_on,
+          href: '#',
+          click: function(){$('.texte-transcription').slideToggle();if($(this).text() == label_off ){$(this).text(label_on);}else{$(this).text(label_off);};return false;}
+        }).appendTo('.toggle-transcription');
+      }
+
+
+
+function tctracking(elt) {
+  if(typeof(tc_var) !== 'undefined'){
+    if(elt[1] == "toute-l-actualite"){
+      if(typeof actu[elt[2]] !='undefined'){
+        tc_vars.page_name = "liste_actualites_"+actu[elt[2]]+"_page_"+tc_vars.curent_page;
+      }else{
+        tc_vars.page_name = "liste_actualites_page_"+tc_vars.curent_page;
+      }
+      tc_vars.page_cat3 = actu[elt[2]];
+      tc_vars.article_title  = tc_vars.page_name;
+      tc_vars.xt_page = "toute_l_actualite::" + tc_vars.article_title;
+      tcrelaod();
+    }
+
+    if(elt[1] == "suivre-l-actualite-du-premier-ministre"){
+      tc_vars.page_name = "liste_elements_" + segments[elt[2]];
+      tc_vars.article_title  = tc_vars.page_name;
+      tc_vars.xt_page = "en_un_coup_d_oeil::" + tc_vars.article_title;
+      tcrelaod();
+    }
+    if(elt[1] == "en-images"){
+      if(typeof elt[2] !='undefined'){
+        tc_vars.curent_page = parseInt(elt[2]) +1
+      }
+      tc_vars.page_name = "liste_medias_page_" + tc_vars.curent_page;
+      tc_vars.article_title  = tc_vars.page_name;
+      tc_vars.xt_page = "en_un_coup_d_oeil::" + tc_vars.article_title;
+      tcrelaod();
+    }
+  }
+};
+
+
+
+
+  this.Drupal.behaviors.matignon = {
+    attach: function(context, settings) {
+
+      // Lien "local", pour scroller dans la page, sans rechargement.
+      // Cf onglets des fiches actions et ministres.
+      $('.lien-local', context).once('lien-local').each(function() {
+        $(this).click(function(e) {
+          e.preventDefault();
+          $.scrollTo($(this).data('scroll'), 250);
+        });
+      });
+
+
+
+      // Insertion de bouton "imprimer" en Javascript. Version FR
+      $('.bouton-imprimer-placeholder-fr').each(function() {
+        var $boutonImprimer;
+        $boutonImprimer = $('<a href="#" class="bouton bouton-imprimer"><span class="icone icone-imprimer"></span>'+Drupal.t('Print')+'</a>');
+        $boutonImprimer.click(function(e) {
+          e.preventDefault();
+          window.print();
+        });
+        $(this).append($boutonImprimer);
+      });
+
+      // Insertion de bouton "imprimer" en Javascript. Version EN
+      $('.bouton-imprimer-placeholder-en').each(function() {
+        var $boutonImprimer;
+        $boutonImprimer = $('<a href="#" class="bouton bouton-imprimer"><span class="icone icone-imprimer"></span>'+Drupal.t('Print')+'</a>');
+        $boutonImprimer.click(function(e) {
+          e.preventDefault();
+          window.print();
+        });
+        $(this).append($boutonImprimer);
+      });
+
+      // Fonction d'ouverture d'un lien en colorbox, empêche le rechargement complet de la page.
+      var openInColorbox = function() {
+        var $a, href, params, params2, url, $verifspan;
+        $a = $(this);
+      	//récupération du <span> précedent le <a>
+      	$verifspan = $(this).prev();
+
+
+        // On sépare l'URL des éventuels paramètres pour les présever.
+        url = $a.attr('href').split('?');
+        // Ajout du suffixe "colorbox" à l'URL.
+        href = url[0] + '/colorbox';
+        // Réinsertion des paramètres si besoin.
+        if (url[1]) {
+          href += '?' + url[1];
+        }
+        // Paramètres colorbox.
+        params = {
+          href: href
+        };
+	       params2 = {
+          href: href,
+	         width:960
+        };
+        $a.on('click', function(e) {
+
+          // Ne déclencher l'ouverture en colorbox que si l'écran fait au moins
+          // 960 pixels de large.
+          if ($(window).width() > 960) {
+
+            e.preventDefault();
+      	    //vérification que l'élément à afficher dans la colorbox est bien une galerie
+      	    if($verifspan.attr('class')=="mosaique-element-icone icone icone-galerie"){
+              $.colorbox($.extend({}, settings.colorbox, params2));
+            }else{
+              $.colorbox($.extend({}, settings.colorbox, params));
+            }
+          }
+        });
+      };
+
+      // Liste des liens à exécuter en colorbox.
+      var colorboxSelector = '.colorbox-link,';
+      colorboxSelector += '.asset-small.asset-affiche .field-name-field-image a,';
+      colorboxSelector += '.asset-small.asset-galerie .field-name-field-image a,';
+      colorboxSelector += '.asset-small.asset-media .field-name-field-image a,';
+      colorboxSelector += '.asset-small.asset-galerie-video .field-name-field-image a,';
+      colorboxSelector += '.asset-small.asset-dmcloud-video .field-name-field-image a';
+      // <statgvt>
+      $(colorboxSelector, context).once('colorbox-link').each(openInColorbox);
+      // </statgvt>
+      $('.linkVideoPblv').live('click', function(){
+        $(colorboxSelector, context).each(openInColorbox);
+      });
+
+
+      // Liens de la page "annuaire des actions".
+      $('.lien-enjeu', context).once('lien-enjeu').each(function() {
+        $(this).click(function(e) {
+          e.preventDefault();
+          // Ouverture ou dissimulation de la liste des actions.
+          $(this).parent().toggleClass('enjeu-item-ouvert');
+          return false;
+        });
+      });
+
+      // Ajout de l'autocomplete aux formulaires de recherche.
+      $('#header .search-form', context).once('pmv6-autocomplete').each(function() {
+        $suggestions = $(this).find('.suggestions-block');
+        // Afficher la liste des suggestions au clic sur le champ de recherche.
+
+        //Accessibilite : on remplace le declencheur click en focus pour permettre la navigation au clavier
+        //$(this).find('.form-text-keys').click(function(e) {
+        $(this).find('.form-text-keys').focus(function(e) {
+          $suggestions.removeClass('element-hidden');
+        });
+
+
+
+        // Masquer la liste des suggestions lorsque l'utilisateur quitte le
+        // champ.
+        $(this).find('.form-text-keys').blur(function(e) {
+          // Ajout d'un délai de 4800ms pour laisser le temps en cas de navigation au clavier de lister les suggestions et à un éventuel clic
+          // sur l'une des suggestions de se produire.
+          delay(4800, function() {
+            $suggestions.addClass('element-hidden');
+          });
+        });
+      });
+
+      // Attache un tooltip aux segments de timeline action qui comportent une
+      // description longue.
+      $('.action-timeline-segment-avec-tooltip', context).once('action-timeline-tooltip').each(function() {
+        var $tooltip;
+        $tooltip = $(this).find('.segment-texte');
+        $tooltip.removeClass('element-invisible');
+        // Si le segment comporte un texte long.
+        if ($tooltip.length) {
+          // Initialisation du tooltip et parametrage.
+          $(this).children('.segment-date').tooltipster({
+            content: $tooltip,
+            // Déclenchement via une fonction personnalisée, ci-dessous.
+            trigger: 'custom',
+            theme: 'timeline-action-tooltip-theme',
+            maxWidth: 360,
+            offsetY: 0,
+            position: 'bottom'
+          });
+        }
+
+        // Au survol du segment de timeline.
+        $(this).hover(function(e) {
+          // Afficher le tooltip si l'écran est plus large que 960px.
+          if ($(window).width() > 960) {
+            $(this).children('.segment-date').tooltipster('show');
+          }
+        }, function(e) {
+          // Masquer le tooltip quand la souris quitte la zone.
+          $(this).children('.segment-date').tooltipster('hide');
+        });
+      });
+
+
+
+      if( $('#quizz').length ){
+        // QUIZZ START
+        function setDataHref(url){
+
+          $(".bouton-partage-quizz-twitter").attr('data-href', url)
+        }
+
+        function getShortUrl(url)
+        {
+
+           var accessToken = '820917b34507894b792a8206da40d4ab92b5205d';
+           var url = 'https://api-ssl.bitly.com/v3/shorten?access_token=' + accessToken + '&longUrl=' + encodeURIComponent(url);
+
+            $.getJSON(
+                url,
+                {},
+                function(response)
+                {
+                    $(".bouton-partage-quizz-twitter").attr('data-href', response.data.url)
+                    //setDataHref(response.data.url);
+                }
+            );
+        }
+
+        function quizzCheckQuestion(){
+          $('.slide-quizz-question ul').each(function(){
+            $(this).randomize('li');
+          });
+        }
+        if( window.location.hostname == "www.gouvernement.fr"){
+          var shortUrl = getShortUrl(window.location.href);
+        }
+
+
+
+        var current = 1;
+        quizzCheckQuestion();
+        $(".quizz-slide-1").show();
+        $("#quizz span.quizz-q-1").addClass('active');
+        var windowWidth = $(window).width();
+       $(window).load(function() {
+          windowWidth = $(window).width();
+        });
+        var html = '<div id="quizz-result-suivant" style="display: none;"><center><button id="quizz-button-suivant" class="ui-state-default ui-corner-all">'+Drupal.t('Suivant')+'</button></center></div>';
+        $(".quizz-result #quizz-restart").after(html);
+
+        function quizzRestart(obj){
+          quizzCheckQuestion();
+          $("#quizz input:radio").attr("checked", false);
+          if($(location).attr('hash')!='#quizz'){
+            document.location = document.location.href + '#quizz'
+          }else{
+            document.location = document.location.href
+          }
+
+          if (typeof tc_events_3 == 'function') {
+            tc_events_3(this, "click_standard_AT", {'click_s2':tc_vars.xtn2,'click_xt_page':  tc_vars.xt_page + "::" + "quizz_restart",'click_type': 'A'})
+            tc_events_3(this,"quizz",{"button_name":"Quizz restart","action":"Quizz restart","label":titleQuizz(),"category":"Quizz"});
+          }
+
+
+          current = 1;
+
+
+          $( "#quizz-button" ).show();
+          $( "#quizz .quizz-header" ).show();
+          var options = { percent: 100 };
+          $( "#quizz .quizz-header-result" ).hide();
+          $(".quizz-slide-1").show( "slide", options, 500 );
+
+
+
+          for (var i = 1; i <= quizz_total +1 ; i++) {
+            $("#quizz span.quizz-q-"+i).removeClass('active');
+            $("#quizz span.quizz-q-"+i).removeClass('check');
+            $(".quizz-reponse-"+i+" p.numero").removeClass("ok");
+            $(".quizz-votre-reponse-"+i).removeClass("ok");
+          };
+          $("#quizz span.quizz-q-1").addClass('active');
+
+          $( ".quizz-result" ).hide();
+        }
+
+        function quizzShowReponse(){
+          if(windowWidth < 960){
+            $(".quizz-result #quizz-restart").hide();
+            $(".quizz-result #quizz-result-suivant").show();
+            $(".quizz-result .quizz-reponse-1").show();
+            for (var i = 2; i <= quizz_total +1 ; i++) {
+              $(".quizz-result .quizz-reponse-"+i).hide();
+            };
+          }
+        }
+
+        var currentRepponse = 1;
+        function quizzResultatSuivant(){
+
+          if( (currentRepponse+1) <= quizz_total) {
+            $(".quizz-result .quizz-reponse-"+currentRepponse).hide();
+            $(".quizz-result .quizz-reponse-"+(currentRepponse+1) ).show();
+            currentRepponse += 1;
+          }
+          if( currentRepponse == quizz_total ) {
+              $(".quizz-result #quizz-restart").show();
+              $(".quizz-result #quizz-result-suivant").hide();
+              currentRepponse = 1
+          }
+
+        }
+        function titleQuizz(){
+          var title = $('h1.titre-texte').first().text();
+          title = title.replace('"', "");
+          return  title;
+        }
+        // Action of button validate
+        function quizzValide(obj) {
+
+          // Get Current answer checked
+          var qcurrent = $("input[name=q"+current+"]:checked").length;
+
+          if(qcurrent === 1 && current < quizz_total + 1){
+
+
+            // If check I show next question
+            var options = { percent: 100 };
+
+            $(".quizz-slide-"+current).hide();
+            current++;
+            $(".quizz-slide-"+current).show( "slide", options, 500 );
+            quizzTab(current);
+
+            if (typeof tc_events_3 == 'function') {
+              tc_events_3(this, "click_standard_AT", {'click_s2':tc_vars.xtn2,'click_xt_page':  tc_vars.xt_page + "::" + "quizz_question_" + (current-1),'click_type': 'A'})
+              tc_events_3(this,"quizz",{"button_name":"Quizz question","action":"Quizz question " + (current-1),"label":titleQuizz(),"category":"Quizz"});
+            }
+
+            // If all question check
+            if(current === quizz_total+1){
+              quizzShowReponse();
+              // hide the button
+              if (typeof tc_events_3 == 'function') {
+                tc_events_3(this, "click_standard_AT", {'click_s2':tc_vars.xtn2,'click_xt_page': tc_vars.xt_page + "::" + "quizz_fin",'click_type': 'A'})
+                tc_events_3(this,"quizz",{"button_name":"Quizz fin","action":"Quizz fin","label":titleQuizz(),"category":"Quizz"});
+              }
+
+              $( "#quizz-button" ).hide();
+              $( "#quizz .quizz-header" ).hide();
+              $( "#quizz .quizz-header-result" ).show();
+
+              // Get answers
+              var goodAnswers = 0;
+              for (var i = 1; i < quizz_total +1 ; i++) {
+                goodAnswers += getResult(i);
+              };
+
+              $(".quizz-header-result p span.result").html(goodAnswers + "<span>/" + quizz_total + "</span>");
+              $(".bouton-partage-quizz-facebook").attr('data-title', Drupal.t("I had a score of")+' ' + goodAnswers + '/' + quizz_total + ' '+Drupal.t('of knowledge #quiz on')+' ' + $('.quizz-header span').text() + Drupal.t(', do you? ')+' ')
+              $(".bouton-partage-quizz-facebook").attr('data-href', window.location.href )
+              $(".bouton-partage-quizz-twitter").attr('href', 'https://twitter.com/intent/tweet?text='+Drupal.t("I had a score of")+' ' + goodAnswers + '/' + quizz_total + ' '+Drupal.t('of knowledge %23quizz on')+' ' + $('.quizz-header span').text() + Drupal.t(', do you? ')+' '+ $(".bouton-partage-quizz-twitter").attr('data-href') + '&amp;via=gouvernementfr')
+            }
+
+          }else{
+            alert(Drupal.t("Merci de cocher une réponse"));
+          }
+
+        };
+
+        function quizzTab(current){
+          for (var i = 1; i <= quizz_total +1 ; i++) {
+            $("#quizz span.quizz-q-"+i).removeClass('active');
+            if(i<current){
+              $("#quizz span.quizz-q-"+i).addClass('check');
+            }else if (i==current){
+              $("#quizz span.quizz-q-"+i).addClass('active');
+            }
+          };
+        }
+
+        function getResult(i) {
+
+          var result=0;
+          // Get checked
+          var qi = $("input[name=q"+i+"]:checked").val();
+
+          if(qi=="a"){
+
+            $(".quizz-reponse-"+i+" p.numero").addClass("ok");
+            $(".quizz-votre-reponse-"+i).addClass("ok");
+            result = 1;
+          }
+          $(".quizz-votre-reponse-"+i+" span span").html("");
+          $(".quizz-votre-reponse-"+i+" span span").append(qs[i-1][qi]);
+
+          return result;
+        };
+
+
+
+        // set effect from select menu value
+        $( "#quizz-button" ).click(function() {
+          quizzValide(this);
+        });
+        $( "#quizz-button-restart" ).click(function() {
+          quizzRestart(this);
+        });
+        $( "#quizz-button-suivant" ).click(function() {
+          quizzResultatSuivant(this);
+        });
+        // QUIZZ END
+      }
+
+
+
+      // Champs avec "brouillard" (dont une partie du contenu est masquée sur la
+      // hauteur via un dégradé) avec un bouton permettant de le "déplier".
+      $('.field-fog', context).once('pmv6-fog').each(function() {
+        var $contenu, $unfold_link;
+        $contenu = $(this);
+        // Si le contenu à traiter est suffisemment haut.
+        if ($contenu.height() > 650) {
+          // On force la hauteur du champ.
+          $contenu.addClass('fog-actif');
+          // Création d'un lien de "dépliage" du champ.
+          $unfold_link = $('<div class="pmv6-fog"><a href="#">... '+Drupal.t('View more')+'</a></div>').appendTo($contenu);
+          // On attache l'action de dépliage au bouton.
+          $unfold_link.click(function(e) {
+            e.preventDefault();
+            // Suppression du bouton.
+            $(this).remove();
+            // Dépliage.
+            $contenu.removeClass('fog-actif');
+          });
+        }
+      });
+
+      // Interactions pour la page "argumentaires à partager".
+      $('.mosaique-element-argumentaire', context).once('argumentaires-unfold').each(function() {
+
+        // Modification par défaut du comportement des liens de l'élément.
+        $(this).find('.unfold-link').click(function(e) {
+          e.preventDefault();
+          // On replie tous les argumentaires de la page.
+          $('.mosaique-element').removeClass('unfolded');
+          // Dépliage de l'élément cliqué.
+          $(this).parents('.mosaique-element').addClass('unfolded');
+          // On recalcule la mosaïque isotope.
+          $('.isotope').isotope('layout');
+        });
+
+        // Activation du bouton de "repli" de l'argumentaire.
+        $(this).find('.close-argumentaire').click(function(e) {
+          e.preventDefault();
+          // Fermeture de l'argumentaire.
+          $(this).parents('.mosaique-element').removeClass('unfolded');
+          // On recalcule la mosaïque isotope.
+          $('.isotope').isotope('layout');
+        });
+      });
+
+
+      // Page "Composition du gouvernement": ajout du champ de recherche par ministre
+      $('#composition-recherche').prepend('<input id="ministre-recherche" class="filtre-recherche-composition form-text" placeholder="'+Drupal.t("Enter the mame of a Minister")+'" type="text">');
+      // Page "Composition du gouvernement": ajout du label correspondant au champ de recherche .element-invisible pour accessibilite
+      $('#composition-recherche').prepend('<label class="element-invisible" for="ministre-recherche">'+Drupal.t("Enter the mame of a Minister, choose in the list and you will automatically be redirected to the Minister's page")+'</label>');
+
+      // Page "Composition du gouvernement": champ de recherche autocomplete.
+      $('.filtre-recherche-composition', context).once('filtre-recherche-composition').each(function() {
+        var options, compositionSuggestionList;
+        // Parametrage de la liste de suggestion.
+        options = {
+          listClass: 'composition-suggestions',
+          searchClass: 'filtre-recherche-composition',
+          valueNames: ['composition-nom']
+        };
+        compositionSuggestionList = new List('composition-recherche', options);
+        // À chaque saisie.
+        $(this).keyup(function(e) {
+          // Afficher les suggestions si le champ n'est pas vide.
+          if ($(this).val()) {
+            $('.composition-suggestions').removeClass('element-hidden');
+          } else {
+            // Sinon masquer les suggestions.
+            $('.composition-suggestions').addClass('element-hidden');
+          }
+        });
+
+        // Lorsque l'utilisateur quitte le champ.
+        $(this).blur(function(e) {
+          // Masquer les suggestions avec un délai de 300ms pour laisser le
+          // temps à un évènement "clic" de se produire.
+          delay(300, function() {
+            $('.composition-suggestions').addClass('element-hidden');
+          });
+        });
+      });
+
+
+      // Page "Services du premier ministre": liste de séléction par type de SPM.
+      $('.filtre-type-spm', context).once('filtre-type-spm').each(function() {
+
+        // En cas de changement de la sélection.
+        $(this).change(function(e) {
+          var selector, val;
+          // Récupération de la valeur associée à la sélection.
+          val = parseInt($(this).val());
+          // Par défaut : afficher toutes les rubriques.
+          if (val === 0) {
+            $('.spm-rubrique').removeClass('element-hidden');
+          } else {
+            // Afficher uniquement la rubrique associée à l'élément sélectionné.
+            selector = '#spm-' + val;
+            $('.spm-rubrique').addClass('element-hidden');
+            $(selector).removeClass('element-hidden');
+          }
+        });
+      });
+
+      // Page "Services du premier ministre": ajout du champ de recherche SPM  -> URLSITE/les-services-du-premier-ministre
+      $('#spm-recherche').prepend('<input class="filtre-recherche-spm form-text" placeholder="'+Drupal.t("Enter a department name")+'" type="text">');
+      // Page "Services du premier ministre": ajout du label correspondant au champ de recherche .element-invisible pour accessibilite
+      $('#spm-recherche').prepend('<label class="element-invisible" for="spm-recherche">'+Drupal.t("Enter the mame of a Prime Minister department, choose in the list and you will automatically be redirected to the Prime Minister department's page")+'</label>');
+
+      // Page "Services du premier ministre": champ de recherche autocomplete.
+      $('.filtre-recherche-spm', context).once('filtre-recherche-spm').each(function() {
+        var options, spmSuggestionList;
+        // Parametrage de la liste de suggestion.
+        options = {
+          listClass: 'spm-suggestions',
+          searchClass: 'filtre-recherche-spm',
+          valueNames: ['spm-nom']
+        };
+        spmSuggestionList = new List('spm-recherche', options);
+        // À chaque saisie.
+        $(this).keyup(function(e) {
+          // Afficher les suggestions si le champ n'est pas vide.
+          if ($(this).val()) {
+            $('.spm-suggestions').removeClass('element-hidden');
+          } else {
+            // Sinon masquer les suggestions.
+            $('.spm-suggestions').addClass('element-hidden');
+          }
+        });
+
+        // Lorsque l'utilisateur quitte le champ.
+        $(this).blur(function(e) {
+          // Masquer les suggestions avec un délai de 300ms pour laisser le
+          // temps à un évènement "clic" de se produire.
+          delay(300, function() {
+            $('.spm-suggestions').addClass('element-hidden');
+          });
+        });
+      });
+
+      // Evolution by Linagora : To navigate in a ul with keyboard arrows
+      var li = $('#spm-recherche li, #composition-recherche li');
+      var liSelected;
+      $(window).keydown(function(e){
+        if(e.which === 40){ // If press DOWN
+          if(liSelected){
+            liSelected.removeClass('selected');
+            next = liSelected.next();
+            if(next.length > 0){
+              liSelected = next.addClass('selected');
+            }else{
+              liSelected = li.eq(0).addClass('selected');
+            }
+          }else{
+            liSelected = li.eq(0).addClass('selected');
+          }
+        }
+        else if(e.which === 38){  // If press UP
+          if(liSelected){
+            liSelected.removeClass('selected');
+            next = liSelected.prev();
+            if(next.length > 0){
+              liSelected = next.addClass('selected');
+            }else{
+              liSelected = li.last().addClass('selected');
+            }
+          }
+          else{
+            liSelected = li.last().addClass('selected');
+          }
+        }
+        else if(e.which === 13){  // If press ENTER
+          var link = $('li.selected a').attr('href')
+            if(link!=null){
+              window.location=link;
+            }
+        }
+      });
+
+      // Liens à associer à un callback AJAX tout en demeurant accessibles.
+      $('.lien-ajax', context).once('lien-ajax').each(function() {
+        var $link, element_settings;
+        $link = $(this);
+
+        // Ajout / supression d'une class "active" sur le lien.
+        $link.click(function(e) {
+          $('.lien-ajax').removeClass('active');
+          //pour accessibilite on retire dans title la notion de filtre actif sur les elements non actif
+          if ( $(this).hasClass('bouton-filtre')){
+            $('.lien-ajax').attr('title', function() {
+              titre = $(this).attr('title').replace(' - filtre actif','');
+              return titre;
+            });
+          }
+
+          $(this).addClass('active');
+          //pour accessibilite on ajoute dans title la notion de filtre actif sur l'element actif
+          $title = $(this).attr('title');
+          $(this).attr('title',$title+' - filtre actif');
+        });
+
+        // Paramétrage du bouton ajax.
+        element_settings = {
+          url: $link.data('ajax-url'),
+          event: 'click'
+        };
+        // <statgvt>
+        // Disable this js for the static version (statgvt).
+        new Drupal.ajax($link[0].id, $link, element_settings);
+        // </statgvt>
+      });
+
+      // Galerie d'images.
+      $('.slider').once('slider').each(function() {
+        var $el, $next, $prev;
+        $el = $(this);
+        if ($el.find('.slide').length > 1) {
+
+          // Initialisation du slider.
+          $el.slick({
+            arrows: false
+          });
+
+          // Création des flèches de navigation.
+          $prev = $('<a class="slide-control slide-prev">'+Drupal.t('Previous')+'</a>').appendTo($el);
+          $next = $('<a class="slide-control slide-next">'+Drupal.t('Next')+'</a>').appendTo($el);
+
+          // Interactions associées aux flèches de navigation.
+          $prev.click(function(e) {
+            e.preventDefault();
+            $el.slickPrev();
+          });
+          $next.click(function(e) {
+            e.preventDefault();
+            $el.slickNext();
+          });
+        }
+      });
+
+      // Agendas ministres et premier ministre.
+      $('.agenda-slider').once('agenda-slider').each(function() {
+        var options;
+
+        // Préparation des options du slider.
+        options = {
+          slick: {
+            infinite: false
+          }
+        };
+        new Agenda($(this), options);
+      });
+
+      // Déplier / replier les barres de filtres au dessus des remontées.
+      $('.filtres-titre').once('filtres-toggle').each(function() {
+        var $text = $(this).text();
+        $(this).empty().wrap('<span class="toggle-filtres"></span>');
+        $("<span>"+$text+"</span>").appendTo($(this));
+
+        var $filtresToggle;
+        $filtresToggle = $('<a href="#" class="bouton-chevron"><span class="icone icone-chevron-toggle">+</span></a>').appendTo($(this));
+        if ($(this).parents('.filtres').hasClass('closed')) {
+          $filtresToggle.find('.icone').addClass('active');
+        }
+        $('span.toggle-filtres .filtres-titre').click(function(e) {
+          e.preventDefault();
+          $filtresToggle.parents('.filtres').toggleClass('closed');
+          $filtresToggle.find('.icone').toggleClass('active');
+        });
+      });
+
+      // Déplier / Replier les blocs dans les fiches ministres et action.
+      $('.node-type-action .field-label:not(.no-chevron), .vocabulary-ministre .field-label-above > .field-label:not(.no-chevron)').once('filtres-toggle').each(function() {
+        var $toggle;
+        $toggle = $('<a href="#" class="bouton-chevron toggle"><span class="icone icone-chevron-toggle">+</span></a>').appendTo($(this));
+        if ($(this).hasClass('closed')) {
+          $toggle.find('.icone').addClass('active');
+        }
+        $toggle.click(function(e) {
+          e.preventDefault();
+          $(this).parents('.field').toggleClass('closed');
+          $(this).find('.icone').toggleClass('active');
+        });
+      });
+
+      // Déplier / réplier le rubrique du longdesc - description textuel infograhie.
+      $('.desclong-toggle').click(function(e) {
+        var $submenu;
+        $submenu = $($(this).attr('rel'));
+        $submenu.toggleClass('closed');
+      });
+
+      $($('.desclong-toggle').attr('rel')).toggleClass('closed');
+
+       $('body').live('click',function(e){
+              if ( $('#mobile-menu-trigger').hasClass('active') == true && (e.target.id != 'mobile-menu' && e.target.id != 'illustration-menu' && e.target.id !="edit-search-block-form-mobile--2" && e.target.id !="edit-submit--3" )) {
+                $('body').toggleClass('mobile-menu-open');
+            $("#mobile-menu-trigger").toggleClass('active');
+            $("#mobile-menu-trigger").focus();
+            e.stopPropagation();
+            return $('#mobile-menu').toggleClass('mobile-open');
+              }
+        });
+
+      $('body').once(function() {
+
+        // Création et insertion du lien d'affichage pour le menu mobile.
+        var $mobileMenuTrigger;
+        $mobileMenuTrigger = $('<a href="#" id="mobile-menu-trigger" title="'+Drupal.t('Show menu')+'"><img id="illustration-menu" alt="'+Drupal.t('Show menu')+'" src="/sites/all/themes/custom/matignon/img/header/mobile-menu-trigger.png"></a>');
+      /*  $mobileMenuTrigger.insertBefore('.headerCell.bgBleu');*/
+        $mobileMenuTrigger.insertBefore('#logo');
+        var $saveTitle = $('#mobile-menu-trigger').attr('title');
+        var $saveAlt = $('#illustration-menu').attr('alt');
+
+        // Activation du lien.
+        $mobileMenuTrigger.click(function(e) {
+          e.preventDefault();
+          var $obj = $(this);
+          $(this).toggleClass('active');
+          $('body').toggleClass('mobile-menu-open');
+          if($(this).hasClass('active')){
+            // Ouverture du menu mobile, on place le focus sur la recherche
+                        $('*:not("#mobile-menu") > a').attr('tabindex','-1');
+                        $('#mobile-menu a').attr('tabindex',0);
+                        $('#EMAIL_FIELD').attr('tabindex',-1);
+
+
+            $("#edit-search-block-form-mobile--2").focus();
+
+
+          } else {
+            // Fermeture du menu mobile on place le focus sur le bouton
+            $("#mobile-menu-trigger").focus();
+          }
+
+          if ($saveTitle != $obj.attr('title')) {
+            $(this).attr('title',$saveTitle);
+            $('#illustration-menu').attr('alt',$saveAlt);
+          }else{
+            $(this).attr('title','Hide menu');
+            $('#illustration-menu').attr('alt',Drupal.t('Hide menu'));
+          }
+
+          return $('#mobile-menu').toggleClass('mobile-open');
+        });
+
+        $("#closeMobileMenu").live('click',function(e){
+
+          if($("#mobile-menu-trigger").hasClass('active')){
+            $('body').toggleClass('mobile-menu-open');
+            $("#mobile-menu-trigger").toggleClass('active');
+            $("#mobile-menu-trigger").focus();
+            e.stopPropagation();
+            return $('#mobile-menu').toggleClass('mobile-open');
+          }
+        return false;
+        });
+
+
+        // Actions à déclencher lorsque la largeur de l'écran change.
+        $(window).on('resize', function() {
+          // Forcer le repli du menu mobile si on passe en desktop.
+          if ($(window).width() > 960) {
+            $('#mobile-menu-trigger').removeClass('active');
+            $('body').removeClass('mobile-menu-open');
+            $('#mobile-menu').removeClass('mobile-open');
+
+            // Affichage de l'encart évenement
+            limit_height = ($('body').height() - $(window).height() - $('footer').height());
+            if ($(window).scrollTop() > limit_height/2 && $(window).scrollTop() < limit_height && !$.cookie('encart')) {
+              $(".evenements-block").addClass('evenements-open');
+            }
+          }else{
+            // repli de l'encart évenement s'il n'a pas été fermé manuellement
+            $(".evenements-block").removeClass('evenements-open');
+          }
+        });
+
+        // <statgvt>
+        $(document).ready(function() {
+
+          if ($('#colorbox').length == 1) {
+            $('#colorbox').attr('aria-labelledby','splash-title');
+          }
+
+          if($('#mobile-menu').length == 1){
+            $(this).find('.mobile-menu-footer').append('<li class="visuallyhidden"><a href="#" id="closeMobileMenu">Fermer</a></li>');
+          }
+
+          if(!$.cookie('encart')){
+
+            var $path = window.location.pathname.substring(1);
+            var $pathArg = $path.split('/');
+            var $slider = false;
+
+            $pathArg[0] += '/*';
+            //A ameliorer : tester sur toutes les valeurs de $pathArg
+
+            $.getJSON( "/ajax/encart", function(data) {
+
+              if(data.state==0){
+                //desactivate
+              }else if(data.state==1){
+                //only homepage
+                if($path==""){
+                  $slider=true;
+                }
+              }else if(data.state==2){
+                //only intern pages
+                if($path!="" && $.inArray($path, data.exclude)<0 && $.inArray($pathArg[0], data.exclude)<0){
+                  $slider=true;
+                }
+              }else if(data.state==3){
+                //homepage and intern pages
+                if($.inArray($path, data.exclude)<0 && $.inArray($pathArg[0], data.exclude)<0){
+                  $slider=true;
+                }
+              }
+
+              if($slider==true){
+                $("#footer").before(data.render);
+                $("#evenements").lightSlider({
+                  loop: true,
+                  keyPress: true,
+                  item: 1,
+                  speed: 1000,
+                  slideMargin: 0,
+                  pause: 4000,
+                  auto: true
+                });
+                // Affichage de l'encart évenement
+                limit_height = ($('body').height() - $(window).height() - $('footer').height());
+                if ($(window).scrollTop() > limit_height/2 && $(window).scrollTop() < limit_height && !$.cookie('encart') && $(window).width() > 960) {
+                  $(".evenements-block").addClass('evenements-open');
+                }else{
+                  $(".evenements-block").removeClass('evenements-open');
+                }
+              }
+
+              // Fermeture de l'encart événement
+              $('#evenements-close').click(function(e) {
+                $(".evenements-block").removeClass('evenements-open');
+                $.cookie('encart', 1, { expires: 1 , path: '/'});
+                return false;
+              });
+
+              // Actions à déclencher lorsque l'utilisateur scroll.
+              $(window).scroll(function() {
+                // Affichage de l'encart évenement
+                limit_height = ($('body').height() - $(window).height() - $('footer').height());
+                if ($(window).scrollTop() > limit_height/2 && $(window).scrollTop() < limit_height && !$.cookie('encart') && $(window).width() > 960) {
+                  $(".evenements-block").addClass('evenements-open');
+                }else{
+                  $(".evenements-block").removeClass('evenements-open');
+                }
+              });
+
+
+
+
+            });
+
+          }
+
+          new SurveyBanner();
+
+        });
+      // </statgvt>
+      SurveyBanner = (function($) {
+
+        function SurveyBanner(opt){
+
+         self = this;
+         // default banner settings. Can be overiden on object instatiation.
+         defaults = {
+              banClass : 'pmv6-survey-banner',
+              banLink : 'https://etudevisiteurs.enquetes.bva.fr',
+              banLinkTitle : 'Participez a notre enquête',
+              banMaxViews : 5,
+              banStartDate : '2018/01/15 12:00',
+              banEndDate : '2018/02/13 18:00',
+              banImgDefault : '/sites/all/themes/custom/matignon/img/banners/enquete-mieuxvousconnaitre.jpg',
+              banImgMobile : '/sites/all/themes/custom/matignon/img/banners/enquete-mieuxvousconnaitre-mobile.jpg',
+              banCssImg: {
+                'max-width' : '100%',
+              },
+              banCssWrapper: {
+                'margin' : '10px auto',
+                'max-width' : '960px',
+                'text-align' : 'center',
+              },
+              banInjectMethod: 'insertAfter',
+              banInjectElement: '#nav',
+              banHideOnClick: false,
+              isMobile : window.innerWidth < '768' ? true : false,
+              cookieName: 'pmv6-ban-v2',
+              pageWhiteList: [], // force black list (ex: page containing subsection class)
+              pageBlackList: [
+                              'page-node-1', // /suivre-l-actualite-du-premier-ministre
+                              'page-node-5', // /toute-l-actualite
+                              'page-node-4', // /les-infographies-et-videos
+                              'page-node-6', // /en-images
+                              'page-node-7', // /espace-presse
+                              'page-node-8', // /discours-et-rapports
+                              'page-node-9', // /les-actions-du-gouvernement
+                              'page-node-13', // /les-services-du-premier-ministre
+                              'page-node-15', // /les-infos-du-gouv
+                              'page-node-28', // /comptes-rendus-du-conseil-des-ministres
+                              'subsec-missionporteparole', // /le-porte-parole et sous-pages
+                              'subsec-lesavezvous', //
+                              'subsec-compositiongouvernement', //
+                              'subsec-enuncoupdoeil', //
+                              'node-type-english',
+                              ],
+          }
+
+          defaults.imgfile = defaults.isMobile && defaults.banImgMobile ? defaults.banImgMobile : defaults.banImgDefault;
+
+          self.options = $.extend({}, defaults, opt); // merge default and options
+
+          self.init = function (){
+
+            if(self.displayBanner()){
+
+              var ban = $( '<div></div>' ,{
+                'class': self.options.banClass,
+                 css: self.options.banCssWrapper,
+              });
+
+              var link = $('<a></a>', {
+                href : self.options.banLink,
+                title : self.options.banLinkTitle,
+                target : '_blank',
+              });
+
+              var img = $('<img />', {
+                src: self.options.imgfile,
+                css: self.options.banCssImg,
+              }).appendTo(link);
+
+              ban[self.options.banInjectMethod](self.options.banInjectElement).append(link);
+
+              if(self.options.banHideOnClick)
+                link.on('click',function(){
+                  self.setBannerCookie(self.options.banMaxViews + 1);
+                });
+
+              self.setBannerCookie();
+
+            }
+          }
+
+          self.displayBanner =  function(){
+            var isDateinRange = calcDate(self.options.banStartDate, self.options.banEndDate);
+            if(!isDateinRange)
+              return false;
+            var isBannerPage = self.isBannerPage();
+            if(!isBannerPage)
+              return false;
+            var banCookie = getCookie(self.options.cookieName)
+            return !banCookie || parseInt(banCookie) <= self.options.banMaxViews;
+          }
+
+          self.setBannerCookie = function(val){
+            var value = val || getCookie(self.options.cookieName) || 1;
+            value++;
+            setCookie(self.options.cookieName, value);
+          }
+
+          self.isBannerPage = function(){
+            var classes = document.body.className.split(" ");
+
+           //overide black list pages
+            for(var i=0; i < self.options.pageWhiteList.length;i++){
+              var item = self.options.pageWhiteList[i];
+              if(classes.indexOf(item) > -1)
+                return true;
+            }
+
+            for(var i=0; i < self.options.pageBlackList.length;i++){
+              var item = self.options.pageBlackList[i];
+              if(classes.indexOf(item) > -1)
+                return false;
+            }
+
+            return true;
+          }
+
+          //utils functions
+
+          function calcDate(startDate,endDate){
+            var start = new Date(startDate);
+            var end = new Date(endDate);
+            var today = new Date();
+
+            return today >= start && today <= end;
+          }
+
+          function getCookie(name) {
+              var nameEQ = name + "=";
+              var ca = document.cookie.split(';');
+              for(var i=0;i < ca.length;i++) {
+                  var c = ca[i];
+                  while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                  if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+              }
+              return null;
+          }
+
+          function setCookie(name,value,days) {
+            var expires = "";
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days*24*60*60*1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+          }
+
+          self.init();
+        }
+
+        return SurveyBanner;
+
+      })(jQuery);
+
+
+        /*
+        annonce1 = '<div><a href=""><img src="" width="800" height="600"></a></div>';
+         if( $('.page-node-178 #node-178').length ){
+          setTimeout(function() {
+            if (!$.cookie('splashAnnonce1') && ($(window).width() > 600)) {
+              $.colorbox($.extend({}, settings.colorbox, {html: annonce1, width: '800px', height: '600px'}));
+              $('#cboxTitle').hide();
+              $.cookie('splashAnnonce1', 1, { expires: 1 , path: '/'});
+            }
+          }, 1000);
+        }
+        */
+
+
+        if( $('.page-node-3868 #node-3868').length ){
+          $('#main').css("background-image", "url(/sites/all/themes/custom/matignon/img/bglt.jpg)");
+          $('#banniere').css("background-color", "#85cfde");
+        }
+
+
+       /* if ( $('#riskNearYou').length && window.innerWidth >= 960) {
+          var e1 = $('#block-menu-menu-risques-majeurs');
+          $(window).scroll(function() {
+              if (!e1.isOnScreen()){
+
+                $('#riskNearYou').addClass('movingRisk');
+              } else {
+
+                $('#riskNearYou').removeClass('movingRisk');
+              }
+          });
+        } else {
+          var top = document.getElementById('risques_menu').offsetTop + document.getElementById('risques_menu').offsetHeight + 15;
+
+          setTimeout(function(){  $('#riskNearYou').css('top',''+top+'px'); }, 2000);
+
+        }*/
+
+
+
+
+        if ( $('.page-node-4516').length){
+          $('.risques-carousel').unslider({
+animation: 'fade', autoplay: true, arrows: false, delay: 5000
+});
+        }
+
+
+
+        // Splash annonce
+        /*
+        setTimeout(function() {
+          annonce = '<div id="splashscreen" style="background-color:#FFF;"><div style=""><p style="background-color:#000;"><img src="/sites/all/themes/custom/matignon/img/annonce_1.jpg" style="display:block;padding-bottom:0px;"><br><iframe title="Abonnez-vous à la lettre d\'information" style="border:none;width:100%;height:50px;" src="/abonnement"></iframe></p></div></div>';
+          if (!$.cookie('annonce') && ($(window).width() > 800) && ( $('body').hasClass('page-node-3868') ||  $('body').hasClass('page-node-3850') )) {
+            $.colorbox($.extend({}, settings.colorbox, {html: annonce, width: '689px', height: '770px'}));
+            $('#cboxTitle').hide();
+            $.cookie('annonce', 1, { expires: 1 , path: '/'});
+          }
+        }, 1000);
+        */
+
+
+
+
+        // Splash e-regie special crise (popin hp)
+        // A activer en cas de crise
+        /*setTimeout(function() {
+          if ($('#crise-splash-wrapper').length && !$.cookie('splash') && ($(window).width() > 600)) {
+            $.colorbox($.extend({}, settings.colorbox, {html: $('#crise-splash-wrapper').html(), width: '900px', height: '700px'}));
+            $('#cboxTitle').hide();
+            $.cookie('splash', 1, { expires: 1 , path: '/'});
+          }
+        }, 3000);*/
+
+/*
+        annonce2 = '<div><a href="/node/7759"><img src="/sites/all/themes/custom/matignon/img/laicite.png" ></a></div>';
+        if($(".page-term-27").length && !$.cookie('splashLaicite') && ($(window).width() > 600)){
+           setTimeout(function() {
+            $.colorbox($.extend({}, settings.colorbox, {html: annonce2, width: '900px', height: '700px'}));
+            $('#cboxTitle').hide();
+            $.cookie('splashLaicite', 1, { expires: 1 , path: '/'});
+        }, 1000)
+        }*/
+
+
+        //Smooth scroll des ancres des fiches actions
+        if(!$("body#agenda-reformes").length){
+          $(document).ready(function() {
+            $('a[href*=#]:not([href=#])').click(function() {
+              if (location.pathname.replace(/^\//,'') == this.pathname.replace(/^\//,'') && location.hostname == this.hostname) {
+                var target = $(this.hash);
+                target = target.length ? target : $('[name=' + this.hash.slice(1) +']');
+                if (target.length) {
+                  var top = target.offset().top;
+                  $('html,body').animate({
+                    scrollTop: top
+                  }, 1000);
+                  return false;
+                }
+              }
+            });
+          });
+        }
+
+        // Création des mosaïques isotope.
+        $('.isotope').each(function() {
+          var $board;
+          $board = $(this);
+          $board.removeClass('isotope-unprocessed');
+          // Attendre le chargement complet des images pour calculer la mosaïque
+          // isotope.
+          imagesLoaded($board, function() {
+            // Initialisation isotope.
+            $board.isotope({
+              itemSelector: settings.pmv6_isotope.itemSelector,
+              masonry: {
+                columnWidth: settings.pmv6_isotope.width,
+                gutter: settings.pmv6_isotope.gutter
+              }
+            });
+            $board.isotope('on', 'layoutComplete', function() {
+              $board.addClass('isotope-processed');
+            });
+          });
+        });
+
+        // Préparer les mosaïques isotope à recevoir de nouveaux éléments via
+        // le framwork AJAX de Drupal.
+        $('.isotope').live('load-more', function(e, data) {
+          var $board, $elements;
+          // Récupération des éléments dans les données AJAX.
+          $elements = $(data).find('.isotope');
+          $board = $(this);
+          // Appliquer les interactions javascript sur les nouveaux éléments.
+          Drupal.attachBehaviors($elements);
+          // Une fois que les images sont chargées, insérer les éléments dans la
+          // page.
+          $elements.imagesLoaded(function() {
+            $board.isotope('insert', $elements.children());
+              // Focus on the first positioning element loaded in Ajax. By Linagora (only to find what we done)
+              var chuisOU = $(".bouton-load-more").attr("href").split("page=")[1];
+              chuisOU = ":nth-child(" + (((chuisOU - 1)*12)+1) + ")";
+              $(".mosaique-elements .mosaique-element").removeClass("onFocusNow");
+              $(".mosaique-elements .mosaique-element" + chuisOU ).addClass("onFocusNow");
+              $(".onFocusNow a").focus();
+          });
+        });
+        $item = '';
+        $('.mosaique-element-legende-titre').live('click', function(e){
+
+          $('.unfolded').find(".close-argumentaire").focus();
+          $item = $(this);
+        });
+        $('.close-argumentaire').live('click',function(e){
+          $item.focus();
+        });
+
+        $(document).bind('cbox_complete', function(e) {
+          if($('.asset-titre').length == 1) {
+            $('#colorbox').attr('aria-labelledby',($('.asset-titre').text()).trim());
+          }
+          // Recalculer la taille de la popup colorbox une fois le contenu chargé.
+          $('#colorbox').imagesLoaded(function() {
+            $.colorbox.resize();
+          });
+          // Masquerle champ "titre" de la popup s'il est vide.
+          if ($('#cboxTitle:empty', context).length) {
+            $('#cboxTitle', context).hide();
+          }
+        });
+
+        //**Marquage **//
+        //if(window.location.hostname.indexOf('gouvernement.fr') != -1 ) {
+
+          //fonction de sanitisation des titres
+          accentsTidy = function(s){
+            var r=s.toLowerCase();
+            r = r.trim();
+            r = r.replace(/\./g,'_');
+            r = r.replace(new RegExp(" ", "g"),"_");
+            r = r.replace(new RegExp(",", "g"),"");
+            r = r.replace(new RegExp("\'", "g"),"_");
+            r = r.replace(new RegExp("[àáâãäå]", "g"),"a");
+            r = r.replace(new RegExp("æ", "g"),"ae");
+            r = r.replace(new RegExp("ç", "g"),"c");
+            r = r.replace(new RegExp("[èéêë]", "g"),"e");
+            r = r.replace(new RegExp("[ìíîï]", "g"),"i");
+            r = r.replace(new RegExp("ñ", "g"),"n");
+            r = r.replace(new RegExp("[òóôõö]", "g"),"o");
+            r = r.replace(new RegExp("œ", "g"),"oe");
+            r = r.replace(new RegExp("[ùúûü]", "g"),"u");
+            r = r.replace(new RegExp("[ýÿ]", "g"),"y");
+            r = r.replace(new RegExp("\\W", "g"),"");
+            r = r.replace("_nouvelle_fenetre",'');
+            return r;
+          }
+
+        function titlePage(){
+          var title = $('h1.titre-texte').first().text();
+          title = title.replace('"', "");
+          return  title;
+        }
+
+          if (typeof tc_events_3 == 'function') {
+
+
+
+            // header
+            $("#marianne, #logo").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'header::logo','click_type': 'N'})
+            });
+            $("#switch-lang").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'header::switch::english','click_type': 'S'})
+            });
+
+            // menu
+            $("#nav a.mlid-332, #nav a.mlid-339").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::actualites::en_un_coup_d_oeil','click_type': 'N'})
+            });
+            $("#nav a.mlid-340").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::actualites::toute_l_actualite','click_type': 'N'})
+            });
+            $("#nav a.mlid-342").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::actualites::en_images','click_type': 'N'})
+            });
+            $("#nav a.mlid-341").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::actualites::espace_presse','click_type': 'N'})
+            });
+            $("#nav a.mlid-773").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::actualites::agenda','click_type': 'N'})
+            });
+            $("#nav a.mlid-743").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::actualites::ressources','click_type': 'N'})
+            });
+
+            $("#nav a.mlid-331, #nav a.mlid-336").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::actions::les_actions','click_type': 'N'})
+            });
+            $(" #nav a.mlid-992").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::actions::le_pacte_responsabilite','click_type': 'N'})
+            });
+            $(" #nav a.mlid-337").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::actions::l_essentiel_des_ministeres','click_type': 'N'})
+            });
+            $(" #nav a.mlid-338").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::actions::le_porte_parole','click_type': 'N'})
+            });
+            $(" #nav a.mlid-514").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::actions::conseil_des_ministres','click_type': 'N'})
+            });
+
+
+            $("#nav a.mlid-333").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::decouvrir::en_un_coup_d_oeil','click_type': 'N'})
+            });
+            $("#nav a.mlid-345").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::decouvrir::composition_du_gouvernement','click_type': 'N'})
+            });
+            $("#nav a.mlid-346").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::decouvrir::services_du_premier_ministre','click_type': 'N'})
+            });
+            $("#nav a.mlid-347").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::decouvrir::le_savez_vous','click_type': 'N'})
+            });
+
+
+            $("#nav a.mlid-334, #nav a.mlid-348").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::partager::les_infographies_et_videos','click_type': 'N'})
+            });
+            $("#nav a.mlid-349").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'menu::partager::les_mots_du_porte_parole','click_type': 'N'})
+            });
+
+            // footer
+            $("#footer .zone-newsletter a, #footer a.footer-menu-item-372").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::newsletter','click_type': 'N'})
+            });
+            $("#footer a.footer-menu-item-1122").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::donnees_ouvertes','click_type': 'N'})
+            });
+            $("#footer a.footer-menu-item-371").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::ecrire_au_premier_ministre','click_type': 'N'})
+            });
+            $("#footer a.footer-menu-item-846").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::contactez_nous','click_type': 'N'})
+            });
+            $("#footer a.footer-menu-item-373").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::mentions_legales','click_type': 'N'})
+            });
+            $("#footer a.footer-menu-item-374").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::english','click_type': 'N'})
+            });
+
+            $("#footer a.footer-main-menu-item-332").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::suivre_l_actualite_du_premier_ministre','click_type': 'N'})
+            });
+            $("#footer a.mlid-339").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::en_un_coup_d_oeil','click_type': 'N'})
+            });
+            $("#footer a.mlid-340").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::toute_l_actualite','click_type': 'N'})
+            });
+            $("#footer a.mlid-342").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::en_images','click_type': 'N'})
+            });
+            $("#footer a.mlid-341").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::espace_presse','click_type': 'N'})
+            });
+            $("#footer a.mlid-773").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::agenda','click_type': 'N'})
+            });
+            $("#footer a.mlid-343").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::ressources','click_type': 'N'})
+            });
+
+            $("#footer a.mlid-331").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::s_informer_sur_les_actions_du_gouvernement','click_type': 'N'})
+            });
+            $("#footer a.mlid-992").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::le_pacte_responsabilite','click_type': 'N'})
+            });
+            $("#footer a.mlid-336").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::les_actions','click_type': 'N'})
+            });
+            $("#footer a.mlid-337").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::l_essentiel_des_ministeres','click_type': 'N'})
+            });
+            $("#footer a.mlid-338").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::le_porte_parole','click_type': 'N'})
+            });
+            $("#footer a.mlid-514").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::conseil_des_ministres','click_type': 'N'})
+            });
+
+
+            $("#footer a.mlid-333, #footer a.mlid-344").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::decouvrir_le_gouvernement_et_les_institutions','click_type': 'N'})
+            });
+            $("#footer a.mlid-345").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::composition_du_gouvernement','click_type': 'N'})
+            });
+            $("#footer a.mlid-346").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::services_du_premier_ministre','click_type': 'N'})
+            });
+            $("#footer a.mlid-347").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::le_savez_vous','click_type': 'N'})
+            });
+
+            $("#footer a.mlid-334,#footer a.mlid-348").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::partagez_et_diffusez','click_type': 'N'})
+            });
+            $("#footer a.mlid-349").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::les_mots_du_porte_parole','click_type': 'N'})
+            });
+
+            $("#footer .sites-publics a.0").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::elysee_fr','click_type': 'S'})
+            });
+            $("#footer .sites-publics a.1").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::service_public_fr','click_type': 'S'})
+            });
+            $("#footer .sites-publics a.2").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::legifrance_gouv_fr','click_type': 'S'})
+            });
+            $("#footer .sites-publics a.3").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::data_gouv_fr','click_type': 'S'})
+            });
+            $("#footer .sites-publics a.4").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':'9','click_xt_page': 'footer::france_fr','click_type': 'S'})
+            });
+
+
+
+            $("#bouton-load-more-105, #argumentaires-bouton-load-more-1, #medias-a-partager-bouton-load-more-1").click(function(){
+              tc_events_3(this, "click_standard_AT", {'click_s2':tc_vars.xtn2,'click_xt_page':  tc_vars.xt_page + "::" +'afficher_plus','click_type': 'A'})
+            });
+
+            $("#node-5 .filtres ul.links li a, #node-6 .filtres ul.links li a, #node-7 .filtres ul.links li a, #node-8 .filtres ul.links li a").each(function(){
+              $(this).click(function(e){
+                tc_events_3(this, "click_standard_AT", {'click_s2':tc_vars.xtn2,'click_xt_page': tc_vars.xt_page + "::" + accentsTidy($(this).text()),'click_type': 'A'})
+              })
+            });
+            $(".facettes ul.facetapi-facetapi-links a").each(function(){
+              $(this).click(function(e){
+                txt = $(this).text();
+                if(txt.startsWith("(-)")){
+                  txt = $(this).html();
+                  txt = txt.replace("(-)","");
+                  //txt = txt.replace(/\s/g,'');
+                  txt = txt.split("<");
+                  filter = "filter_cancel::" + accentsTidy(txt[0]);
+                }else{
+                  //txt = txt.replace(/\s/g,'');
+                  txt = txt.split("(");
+                  filter = "filter::" + accentsTidy(txt[0]);
+                }
+                txt = $(this).text().split("(")
+                tc_events_3(this, "click_standard_AT", {'click_s2':tc_vars.xtn2,'click_xt_page': tc_vars.xt_page + "::" + filter,'click_type': 'N'})
+              })
+            });
+
+
+            $("#mosaique-argumentaires ul li a.mosaique-element-image").each(function(){
+              $(this).click(function(e){
+                tc_events_3(this, "click_standard_AT", {'click_s2':tc_vars.xtn2,'click_xt_page': tc_vars.xt_page + "::" + accentsTidy($(this).find('img').attr('alt')), 'click_type': 'N'})
+              })
+            });
+
+
+
+            $("#partage-reseau a.presence, .footer-left a.presence").each(function(){
+              $(this).click(function(e){
+                if($(this).hasClass("presence-twitter")){
+                  action = "Twitter gouvernement"
+                  label = "Page twitter gouvernementfr"
+                }else if($(this).hasClass('presence-facebook')){
+                  action = "Facebook gouvernement"
+                  label = "Page facebook gouvernementfr"
+                }else{
+                  action = "Tumblr gouvernement"
+                  label = "Page tumblr gouvernementfr"
+                }
+                tc_events_3(this, "click_standard_AT", {'click_s2':tc_vars.xtn2,'click_xt_page': tc_vars.xt_page + "::" + accentsTidy(label),'click_type': 'S'})
+                tc_events_3(this,"reseau_social",{"button_name":"presence_reseau_social","action":action,"label":label,"category":"reseaux_sociaux_gouvernement"});
+              });
+            });
+
+
+            $("#content a").each(function(){
+
+              // Sharing buttons
+              if($(this).hasClass("bouton-partage")){
+
+                $(this).click(function(e){
+                  if($(this).hasClass('bouton-partage-quizz-twitter')){
+                    action = "Twitter | Tweet quizz"
+                    label = "partage_quizz_twitter"
+                  }else if($(this).hasClass('bouton-partage-quizz-facebook')){
+                    action = "Facebook | Share quizz"
+                    label = "partage_quizz_facebook"
+                  }else if($(this).hasClass("bouton-partage-twitter") ) {
+                    action = "Twitter | Tweet"
+                    label = "partage_twitter"
+                  }else if($(this).hasClass("bouton-partage-facebook") ){
+                    action = "Facebook | Share"
+                    label = "partage_facebook"
+
+                  }else{
+                    action = "E-mail | Share"
+                    label = "partage_mail"
+                  }
+                  tc_events_3(this, "click_standard_AT", {'click_s2':tc_vars.xtn2,'click_xt_page': tc_vars.xt_page + "::" + accentsTidy(titlePage()),'click_type': 'S'})
+                  tc_events_3(this,"reseau_social",{"button_name":"partage_action","action":action,"label":titlePage(),"category":"Social"});
+                })
+              }
+
+              if($(this).hasClass("download-link")){
+
+                // download
+                $(this).click(function(e){
+                  filename = $(this).attr('href').substr($(this).attr('href').lastIndexOf("/")+1);
+                  _ext = $(this).attr('href').split('.').pop();
+                  file = $(this).attr('href').split('/').pop();
+
+                  if($(this).hasClass("liseuse-link")){
+                    tc_events_3(this, "click_standard_AT", {'click_s2':tc_vars.xtn2,'click_xt_page': tc_vars.xt_page + "::liseuse::" + accentsTidy($(this).attr('alt')),'click_type': 'N'})
+                  }else{
+                    if( _ext == "pdf" || _ext == "zip" ){
+                      tc_events_3(this, "click_standard_AT", {'click_s2':tc_vars.xtn2,'click_xt_page': tc_vars.xt_page + "::"+_ext+"::" + accentsTidy(file),'click_type': 'T'})
+                      tc_events_3(this,"download",{"button_name":"Download_action","action":"Download "+ accentsTidy(file),"label":"Download " + filename,"category":"download"});
+                    }
+                  }
+                 });
+              }
+
+
+                // outbound && !$(this).hasClass('bouton-social') && !$(this).hasClass('download-link')
+                if( $(this).attr('href') && ( $(this).attr('href').indexOf('http') === 0 || $(this).attr('href').indexOf('https') === 0 ) ){
+                  $(this).click(function(e){
+                    _arr = $(this).attr('href').split("/");
+                    if( _arr[2] != 'www.gouvernement.fr'){
+                      tc_events_3(this, "click_standard_AT", {'click_s2':tc_vars.xtn2,'click_xt_page': tc_vars.xt_page + "::" + accentsTidy(_arr[2]),'click_type': 'S'})
+                      tc_events_3(this,"outbound",{"button_name":"Outbound_link","action":"Link Outbound","label":"lien " + accentsTidy(_arr[2]),"category":"outbound"});
+                    }
+                  });
+                }
+            });
+          }
+        //}
+        //**Fin du marquage**//
+      });
+    }
+  };
+
+}).call(this);
+
+(function ($) {
+
+  // Store the original beforeSerialize, as we want to continue using
+  // it after we've overridden it.
+  if(typeof(Drupal.ajax)  == 'function'){
+    Drupal.ajax.prototype.originalBeforeSerialize = Drupal.ajax.prototype.beforeSerialize;
+
+    if(navigator.doNotTrack!=1){
+      Drupal.ajax.prototype.beforeSend = function(xhr,obj) {
+        uri = parse_url(obj.url);
+        tc_tracking_ajax(uri);
+      }
+    }
+
+
+    /**
+     * Override core's beforeSerialize.
+     *
+     * We switch to using GET if this is for an ajax View.
+     * We also avoid adding ajax_html_id and ajax_page_state.
+     * (This happens in core's beforeSerialize).
+     */
+    Drupal.ajax.prototype.beforeSerialize = function (element, options) {
+      // @See Drupal.ajax.prototype.beforeSerialize
+      if (this.form) {
+        var settings = this.settings || Drupal.settings;
+        Drupal.detachBehaviors(this.form, settings, 'serialize');
+      }
+      // If this is for a view, switch to GET.
+      if (options.url &&
+        (
+          options.url.indexOf('views/ajax') !== -1 ||
+          options.url.indexOf('ajax/encart') !== -1 ||
+          options.url.indexOf('mosaique/medias-a-partager') !== -1 ||
+          options.url.indexOf('mosaique/en-images') !== -1 ||
+          options.url.indexOf('ajax/actualite') !== -1 ||
+          options.url.indexOf('ajax/documents') !== -1 ||
+          options.url.indexOf('timeline/ajax') !== -1 ||
+          options.url.indexOf('argumentaires') !== -1
+        )) {
+        options.type = 'GET';
+        return;
+      }
+      return this.originalBeforeSerialize(element, options);
+    };
+  }
+
+  $.fn.randomize = function(childElem) {
+      function shuffle(o) {
+          for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+          return o;
+      };
+      return this.each(function() {
+          var $this = $(this);
+          var elems = $this.children(childElem);
+          shuffle(elems);
+          $this.detach(childElem);
+          for(var i=0; i < elems.length; i++) {
+              $this.append(elems[i]);
+          }
+      });
+  }
+
+
+
+})(jQuery);
+
+
+function parse_url(str, component) {
+  //       discuss at: http://phpjs.org/functions/parse_url/
+  //      original by: Steven Levithan (http://blog.stevenlevithan.com)
+  // reimplemented by: Brett Zamir (http://brett-zamir.me)
+  //         input by: Lorenzo Pisani
+  //         input by: Tony
+  //      improved by: Brett Zamir (http://brett-zamir.me)
+  //             note: original by http://stevenlevithan.com/demo/parseuri/js/assets/parseuri.js
+  //             note: blog post at http://blog.stevenlevithan.com/archives/parseuri
+  //             note: demo at http://stevenlevithan.com/demo/parseuri/js/assets/parseuri.js
+  //             note: Does not replace invalid characters with '_' as in PHP, nor does it return false with
+  //             note: a seriously malformed URL.
+  //             note: Besides function name, is essentially the same as parseUri as well as our allowing
+  //             note: an extra slash after the scheme/protocol (to allow file:/// as in PHP)
+  //        example 1: parse_url('http://username:password@hostname/path?arg=value#anchor');
+  //        returns 1: {scheme: 'http', host: 'hostname', user: 'username', pass: 'password', path: '/path', query: 'arg=value', fragment: 'anchor'}
+
+  var query, key = ['source', 'scheme', 'authority', 'userInfo', 'user', 'pass', 'host', 'port',
+      'relative', 'path', 'directory', 'file', 'query', 'fragment'
+    ],
+    ini = (this.php_js && this.php_js.ini) || {},
+    mode = (ini['phpjs.parse_url.mode'] &&
+      ini['phpjs.parse_url.mode'].local_value) || 'php',
+    parser = {
+      php: /^(?:([^:\/?#]+):)?(?:\/\/()(?:(?:()(?:([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?))?()(?:(()(?:(?:[^?#\/]*\/)*)()(?:[^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+      strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+      loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/\/?)?((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/ // Added one optional slash to post-scheme to catch file:/// (should restrict this)
+    };
+
+  var m = parser[mode].exec(str),
+    uri = {},
+    i = 14;
+  while (i--) {
+    if (m[i]) {
+      uri[key[i]] = m[i];
+    }
+  }
+
+  if (component) {
+    return uri[component.replace('PHP_URL_', '')
+      .toLowerCase()];
+  }
+  if (mode !== 'php') {
+    var name = (ini['phpjs.parse_url.queryKey'] &&
+      ini['phpjs.parse_url.queryKey'].local_value) || 'queryKey';
+    parser = /(?:^|&)([^&=]*)=?([^&]*)/g;
+    uri[name] = {};
+    query = uri[key[12]] || '';
+    query.replace(parser, function($0, $1, $2) {
+      if ($1) {
+        uri[name][$1] = $2;
+      }
+    });
+  }
+  uri.queryArray = {};
+  if(typeof uri.query != 'undefined'){
+    qa = uri.query.split("&");
+    for (index = 0; index < qa.length; ++index) {
+      element = qa[index].split('=');
+      uri.queryArray[element[0]] = element[1];
+    }
+  }
+
+  delete uri.source;
+  return uri;
+}
+
+function tc_tracking_ajax(uri) {
+  //console.log(uri)
+  if(typeof(tc_var) !== 'undefined'){
+    tc_vars.curent_page = 1
+    if(typeof  uri.queryArray['page'] != 'undefined'){
+      tc_vars.curent_page = parseInt(uri.queryArray['page']) + 1;
+    }
+
+    elt = uri.path.split('/')
+
+    // toute-l-actualite / filter
+    if(elt[2] == "actualite"){
+      if(typeof actu[elt[3]] !='undefined'){
+        tc_vars.page_name = "liste_actualites_"+actu[elt[3]]+"_page_"+tc_vars.curent_page;
+      }else{
+        tc_vars.page_name = "liste_actualites_page_"+tc_vars.curent_page;
+      }
+      tc_vars.page_cat3 = actu[elt[3]];
+      tc_vars.article_title  = tc_vars.page_name;
+      tc_vars.xt_page = "toute_l_actualite::" + tc_vars.article_title;
+      tcrelaod();
+    }
+
+    // toute-l-actualite pagination
+    if(elt[1] == "views" && uri.queryArray['view_name'] == 'tous_les_articles'){
+    vp = uri.queryArray['view_path'].split('%2F');
+    if(typeof actu[vp[2]] !='undefined'){
+      tc_vars.page_name = "liste_actualites_"+actu[vp[2]]+"_page_"+tc_vars.curent_page;
+    }else{
+      tc_vars.page_name = "liste_actualites_page_"+tc_vars.curent_page;
+    }
+      tc_vars.page_cat3 = actu[elt[2]];
+      tc_vars.article_title  = tc_vars.page_name;
+      tc_vars.xt_page = "toute_l_actualite::" + tc_vars.article_title;
+      tcrelaod();
+    }
+
+    // suivre-l-actualite-du-premier-ministre
+    if(elt[1] == "timeline"){
+      tc_vars.page_name = "liste_elements_" + segments[elt[3]];
+      tc_vars.article_title  = tc_vars.page_name;
+      tc_vars.xt_page = "en_un_coup_d_oeil::" + tc_vars.article_title;
+      tcrelaod();
+    }
+    // En images / video / galerie
+    if(elt[2] == "en-images"){
+      if(typeof elt[3] !='undefined'){
+        tc_vars.curent_page = parseInt(elt[3]) +1
+      }
+      if(typeof elt[4] !='undefined'){
+        tc_vars.page_name = "liste_medias_" +elt[4] + "_page_" +  tc_vars.curent_page;
+      }else{
+        tc_vars.page_name = "liste_medias_page_" + tc_vars.curent_page;
+      }
+      tc_vars.article_title  = tc_vars.page_name;
+      tc_vars.xt_page = "en_un_coup_d_oeil::" + tc_vars.article_title;
+      tcrelaod();
+    }
+
+    // espace presse // filter
+    if(elt[1] == "documents"){
+
+      if(typeof elt[2] !='undefined'){
+        tc_vars.page_name = "liste_documents_" +documents[elt[2]] + "_page_" +  tc_vars.curent_page;
+        tc_vars.page_cat3 = documents[elt[2]];
+      }else{
+        tc_vars.page_name = "liste_documents_page_" + tc_vars.curent_page;
+      }
+      tc_vars.article_title  = tc_vars.page_name;
+      if(tcc){
+        tc_vars.xt_page = "espace_presse::" + tc_vars.article_title;
+      }else{
+        tc_vars.xt_page = "ressources::" + tc_vars.article_title;
+      }
+      tcrelaod();
+    }
+    // espace presse // pagination
+    if(elt[1] == "views" && uri.queryArray['view_name'] == 'documents'){
+      vp = uri.queryArray['view_path'].split('%2F');
+      if(typeof documents[vp[2]] !='undefined'){
+        tc_vars.page_name = "liste_documents_"+documents[vp[2]]+"_page_"+tc_vars.curent_page;
+      }else{
+        tc_vars.page_name = "liste_documents_page_"+tc_vars.curent_page;
+      }
+      tc_vars.page_cat3 = documents[vp[2]];
+      tc_vars.article_title  = tc_vars.page_name;
+      if(tcc){
+        tc_vars.xt_page = "espace_presse::" + tc_vars.article_title;
+      }else{
+        tc_vars.xt_page = "ressources::" + tc_vars.article_title;
+      }
+
+      tcrelaod();
+    }
+
+    // actu espace
+    if(elt[1] == "views" && elt[2] == "ajax" && ( uri.queryArray["view_name"]=="actualite_espace"
+    ||  uri.queryArray["view_name"]=="actualite_espace_simple" )
+    ){
+      if(typeof tc_vars['page_name_origin'] =='undefined'){
+        tc_vars['page_name_origin'] = tc_vars.page_name;
+        tc_vars['xt_page_origin'] = tc_vars.xt_page;
+      }
+      tc_vars.page_name = tc_vars.page_name_origin + "_page_"+tc_vars.curent_page;
+      tc_vars.article_title = tc_vars.page_name
+      tc_vars.xt_page = tc_vars.xt_page_origin +"_page_"+tc_vars.curent_page;
+    }
+
+    // /mosaique/medias-a-partager
+    if(elt[2] == "medias-a-partager"){
+      if(typeof tc_vars['page_name_origin'] =='undefined'){
+        tc_vars['page_name_origin'] = tc_vars.page_name;
+        tc_vars['xt_page_origin'] = tc_vars.xt_page;
+      }
+      tc_vars.page_name = tc_vars.page_name_origin + "_page_" + (parseInt(elt[3]) + 1);
+      tc_vars.article_title = tc_vars.page_name;
+      tc_vars.xt_page = tc_vars.xt_page_origin +"_page_"+ (parseInt(elt[3]) + 1);
+    }
+
+    // /mosaique/medias-a-partager
+    if(elt[1] == "argumentaires"){
+      if(typeof tc_vars['page_name_origin'] =='undefined'){
+        tc_vars['page_name_origin'] = tc_vars.page_name;
+        tc_vars['xt_page_origin'] = tc_vars.xt_page;
+      }
+      tc_vars.page_name = tc_vars.page_name_origin + "_page_" + (parseInt(elt[2]) + 1);
+      tc_vars.article_title = tc_vars.page_name;
+      tc_vars.xt_page = tc_vars.xt_page_origin +"_page_"+ (parseInt(elt[2]) + 1);
+    }
+  }
+};
+
+function tcrelaod() {
+
+  var docHeadObj = document.getElementsByTagName("head")[0];
+  var headScript = document.createElement("script");
+  headScript.type = "text/javascript";
+  headScript.src = "/sites/all/modules/custom/pmv6_marquage/jstc/tc_Gouvernementfr_1.js";
+  //docHeadObj.appendChild(headScript);
+  bodyScript = document.createElement("script");
+  bodyScript.type = "text/javascript";
+  bodyScript.src = "/sites/all/modules/custom/pmv6_marquage/jstc/tc_Gouvernementfr_3.js";
+  var docFbObj = document.getElementById("fb-root");
+  //docFbObj.appendChild(bodyScript);
+
+};
+
+
+(function ($) {
+
+  Drupal.behaviors.openclose = {
+    attach: function (context, settings) {
+      $('.encart-blockopenclose .blockopenclose-texte').each(function() {
+        $(this).hide();
+      });
+      $('.encart-blockopenclose .blockopenclose-title').each(function() {
+        $(this).click(function(){
+          console.log($(this).parent().find('.blockopenclose-texte'))
+          $(this).parent().find('.blockopenclose-texte').toggle();
+        });
+      });
+    }
+  };
+})(jQuery);
+
+
+// Réorganisation footer menu
+(function ($) {
+    $(document).ready(function() {
+    $('#footer-top .footer-top-menu>li').addClass('footer-top-menu-item col-sm-4');
+    $('#footer-top .footer-top-menu-en>li').addClass('footer-top-menu-item col-sm-4');
+    });
+
+})(jQuery);
+
+
+
+// animations page charte homepage
+// Detect request animation frame
+var scroll = window.requestAnimationFrame ||
+             // IE Fallback
+             function(callback){ window.setTimeout(callback, 1000/60)};
+var elementsToShow = document.querySelectorAll('.show-on-scroll');
+
+function loop() {
+  Array.prototype.forEach.call(elementsToShow, function(element){
+    if (isElementInViewport(element)) {
+      element.classList.add('is-visible');
+    } else {
+      // element.classList.remove('is-visible');
+    }
+  });
+  scroll(loop);
+}
+
+// Call the loop for the first time
+loop();
+
+// Helper function from: http://stackoverflow.com/a/7557433/274826
+function isElementInViewport(el) {
+  // special bonus for those using jQuery
+  if (typeof jQuery === "function" && el instanceof jQuery) {
+    el = el[0];
+  }
+  var rect = el.getBoundingClientRect();
+  return (
+    (rect.top <= 0
+      && rect.bottom >= 0)
+    ||
+    (rect.bottom >= (window.innerHeight || document.documentElement.clientHeight) - 200 &&
+      rect.top <= (window.innerHeight || document.documentElement.clientHeight) - 200)
+    ||
+    (rect.top >= 0 &&
+      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) - 200)
+  );
+}
+
+// changer le name xiti quand on ouvre un sous menu
+function changeUnfoldTags() {
+  var active_tags = jQuery('.charte-has-submenu.active > a');
+  for (var i = 0; i < active_tags.length; i++) {
+    var current_value = jQuery(active_tags[i]).attr('data-smarttag-click');
+    var replaced_value = current_value.replace('"fold', '"unfold');
+    jQuery(active_tags[i]).attr('data-smarttag-click', replaced_value);
+  }
+  var inactive_tags = jQuery('.charte-has-submenu:not(.active) > a');
+  for (var i = 0; i < inactive_tags.length; i++) {
+    var current_value = jQuery(inactive_tags[i]).attr('data-smarttag-click');
+    var replaced_value = current_value.replace('"unfold', '"fold');
+    jQuery(inactive_tags[i]).attr('data-smarttag-click', replaced_value);
+  }
+}
+
+jQuery(document).ready(function() {
+  if (jQuery('.page-charte-graphique').length) {
+    // slider page charte homepage
+    jQuery('#charte-homepage-marque-slider-container').slick({
+      arrows: false,
+      infinite: true,
+      slidesToShow: 1,
+      adaptiveHeight: true,
+      onAfterChange: function(event, slide_index) {
+        jQuery('.slick-dots li').removeClass('slick-active');
+        jQuery('.slick-dots li:nth-child(' + (parseInt(slide_index) + 1) + ')').addClass('slick-active');
+      }
+    });
+
+    jQuery('#slick-next').click(function(event) {
+      event.preventDefault();
+      jQuery('#charte-homepage-marque-slider-container').slickNext();
+    });
+    jQuery('#slick-prev').click(function(event) {
+      event.preventDefault();
+      jQuery('#charte-homepage-marque-slider-container').slickPrev();
+    });
+    jQuery('.slick-dots li a').click(function(event) {
+      event.preventDefault();
+      jQuery('#charte-homepage-marque-slider-container').slickGoTo(jQuery(this).attr('data-index'));
+    });
+
+    // gestion du scroll des tableaux wysiwyg
+    jQuery('.paragraphs-item--charte-wysiwyg table').wrap("<div style='overflow-x:auto;'></div>");
+
+    if (jQuery('.charte-sidemenu').length) {
+      // gestion du menu page charte opérationnelle
+      jQuery('.charte-sidemenu a[href="'+window.location.pathname+'"]').parent('.charte-sidemenu-subtitle').addClass('active');
+      changeUnfoldTags();
+
+      window.sidebar = new StickySidebar('.charte-sidemenu', {
+        topSpacing: 53,
+        bottomSpacing: 0,
+        containerSelector: '#charte-page-ope-contenu',
+        innerWrapperSelector: '.charte-sidemenu-inner',
+        // minWidth: 0,
+        minWidth: 960, // nécessaire pour ne pas faire planter le mobile
+      });
+
+      setInterval(function() {
+        window.sidebar.updateSticky();
+      }, 2000);
+
+      // // recalculer le sticky du menu quand on ouvre ou ferme les sous-sections du menu
+      // jQuery('.charte-has-submenu > a, .charte-has-submenu > a:after').click(function(event) {
+      //   //event.preventDefault();
+      //   jQuery(this).parent('.charte-has-submenu').toggleClass('active');
+      //   changeUnfoldTags();
+      //   sidebar.updateSticky();
+      // });
+
+
+      // ouvrir et fermer le menu mobile
+      jQuery('#charte-sidemenu-mobile-header-container').click(function(event) {
+        jQuery('.charte-sidemenu').toggleClass('active');
+        if (jQuery('.charte-sidemenu').hasClass('active') && jQuery('.charte-sidemenu').hasClass('sticky')) {
+          jQuery('body').addClass('prevent-scroll');
+        } else {
+          jQuery('body').removeClass('prevent-scroll');
+        }
+      });
+      // fermer le menu mobile quand on clique sur un lien
+      jQuery('.charte-has-submenu + ul a').click(function() {
+        jQuery('.charte-sidemenu').removeClass('active');
+        jQuery('body').removeClass('prevent-scroll');
+      });
+
+      // gestino du sticky du menu sur mobile
+      window.onscroll = function() { handleSticky() };
+
+      var navbar = jQuery('.charte-sidemenu');
+      var sticky = navbar.offset().top;
+
+      function handleSticky() {
+        if (window.pageYOffset >= sticky) {
+          navbar.addClass("sticky");
+          if (navbar.hasClass('active')) {
+            jQuery('body').addClass('prevent-scroll');
+          }
+        } else {
+          navbar.removeClass("sticky");
+          jQuery('body').removeClass('prevent-scroll');
+        }
+      }
+
+      jQuery('.charte-sidemenu-page-link').on('click', function(e) {
+        jQuery('.charte-sidemenu-page-link').removeClass('active');
+        jQuery(this).addClass('active');
+      });
+    }
+
+    if (window.innerWidth >= 960) {
+
+    // gestion des play/pause sur les gifs
+    function gif2canvas() {
+      var all_gifs = jQuery('.page-charte-graphique img[src$=".gif"]');
+      window.ff = [];
+      for (var i = 0; i < all_gifs.length; i++) {
+        // gestion des images mobile/desktop
+        var classname = jQuery(all_gifs[i]).hasClass('charte-img-mobile') ? 'charte-img-mobile' : jQuery(all_gifs[i]).hasClass('charte-img-desktop') ? 'charte-img-desktop' : false;
+        var maxwidth = jQuery(all_gifs[i]).parent().width();
+        var gif_controller = new SuperGif({
+          gif: all_gifs[i],
+          auto_play: true,
+          progressbar_height: 3,
+          max_width: maxwidth,
+        });
+        gif_controller.load(gifIsCreated(gif_controller, classname));
+      }
+    }
+    gif2canvas();
+
+    // click sur le gif
+    jQuery(document).on('keydown', '.jsgif canvas', function(event) { handleGifPlayPause(event, jQuery(this)); });
+    jQuery(document).on('click', '.jsgif canvas', function(event) { handleGifPlayPause(event, jQuery(this)); });
+    jQuery(document).on('tap', '.jsgif canvas', function(event) { handleGifPlayPause(event, jQuery(this)); });
+
+    // click sur les boutons play pause
+    jQuery(document).on('keydown', '.jsgif .jsgif_toolbar img', function(event) { handleGifPlayPauseButton(event, jQuery(this)); });
+    jQuery(document).on('click', '.jsgif .jsgif_toolbar img', function(event) { handleGifPlayPauseButton(event, jQuery(this)); });
+    jQuery(document).on('tap', '.jsgif .jsgif_toolbar img', function(event) { handleGifPlayPauseButton(event, jQuery(this)); });
+
+    // gestion des gif responsive
+    var resizeTimer;
+    var currentWidth = window.innerWidth;
+    jQuery(window).on('resize', function(e) {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function() {
+        if (window.innerWidth != currentWidth) {
+          currentWidth = window.innerWidth;
+          jQuery('.jsgif').remove();
+          jQuery('.jsgif-processed-img').removeClass('jsgif-processed-img');
+          gif2canvas();
+        }
+      }, 250);
+    });
+
+    function gifIsCreated(gif_controller, classname) {
+      return function() {
+        var canvas = gif_controller.get_canvas();
+        window.ff.push({
+          el: canvas,
+          control: gif_controller
+        });
+        // ajout des boutons play pause
+        jQuery(canvas).attr('tabindex', 0)
+          .siblings('.jsgif_toolbar')
+            .append('<img tabindex="0" class="jsgif_play" src="/sites/all/themes/custom/matignon/img/charte_play.png" alt="Lancer l\'animation">')
+            .append('<img tabindex="0" class="jsgif_pause" src="/sites/all/themes/custom/matignon/img/charte_pause.png" alt="Pauser l\'animation">');
+        // gestion des images mobile/desktop
+        if (classname != false) {
+          // jQuery(canvas).parent('.jsgif').addClass(classname);
+        }
+      }
+    }
+
+    function handleGifPlayPauseButton(event, button) {
+      if (event.type == 'keydown' && event.which != 32) {
+        return false;
+      }
+
+      var el = jQuery(button).parent('.jsgif_toolbar').siblings('canvas');
+      var ff_element = false;
+      for (var j = 0; j < window.ff.length; j++) {
+        if (window.ff[j].el == el[0]) {
+          ff_element = window.ff[j].control;
+          break;
+        }
+      }
+      if (ff_element == false) {
+        return false;
+      }
+
+      event.preventDefault();
+      if (jQuery(button).hasClass('jsgif_play')) {
+        ff_element.play();
+        el.removeClass('gif-inactive');
+      } else if (jQuery(button).hasClass('jsgif_pause')) {
+        ff_element.pause();
+        el.addClass('gif-inactive');
+      }
+      return true;
+    }
+
+    function handleGifPlayPause(event, el) {
+      if (event.type == 'keydown' && event.which != 32) {
+        return false;
+      }
+
+      var ff_element = false;
+      for (var j = 0; j < window.ff.length; j++) {
+        if (window.ff[j].el == el[0]) {
+          ff_element = window.ff[j].control;
+          break;
+        }
+      }
+      if (ff_element == false) {
+        return false;
+      }
+
+      event.preventDefault();
+      if (el.hasClass('gif-inactive')) {
+        ff_element.play();
+        el.removeClass('gif-inactive');
+      } else {
+        ff_element.pause();
+        el.addClass('gif-inactive');
+      }
+      return true;
+    }
+    }
+  }
+});

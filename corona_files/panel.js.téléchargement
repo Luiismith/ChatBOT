@@ -1,0 +1,59 @@
+/**
+ * Vue des panneaux d'information sur la video et d'affichage du lien/code embed
+ */
+/*global define*/
+/*jslint browser: true*/
+define([
+    "jquery",
+    "app/model/player",
+    "app/model/video",
+    "lib/dateFormatter"
+], function ($, playerModel, videoModel, dateFormatter) {
+    'use strict';
+
+    var $panel;
+
+    function onPlayerPanelChanged(event, currentPanel) {
+        if (null === currentPanel) {
+            $panel.hide();
+        } else {
+            $panel.show();
+        }
+        if ("share" === currentPanel) {
+            $panel.find("#panel-share-content").show();
+        } else {
+            $panel.find("#panel-share-content").hide();
+        }
+        if ("info" === currentPanel) {
+            $panel.find("#panel-info-content").show();
+        } else {
+            $panel.find("#panel-info-content").hide();
+        }
+    }
+
+    function onVideoChanged() {
+        // update INFO PANEL
+        $("#panel-info-date").text(dateFormatter.formatDateLong(videoModel.date));
+        $("#panel-info-duration").text(videoModel.formattedDuration);
+        $("#panel-info-description").text(videoModel.description);
+
+        // update SHARE PANEL
+        $("#share-panel-link").val(videoModel.shareUrl);
+        $("#share-panel-code").text(videoModel.embedCode);
+    }
+
+    return {
+        initialize: function () {
+            $(playerModel).on("player_panel_changed", onPlayerPanelChanged);
+            $(videoModel).on("video_changed", onVideoChanged);
+            $("#btn-close-panel").on("click", function () {
+                playerModel.togglePanel(null);
+            });
+            $panel = $("#panel");
+            // auto-select
+            $panel.find(".auto-select").on("click", function () {
+                this.select(this.id);
+            });
+        }
+    };
+});

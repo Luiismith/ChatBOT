@@ -1,0 +1,144 @@
+/*global define*/
+/*jslint browser: true*/
+define([
+    "jquery",
+    "app/model/player",
+    "app/model/video",
+    "lib/support"
+], function ($, playerModel, videoModel, support) {
+    'use strict';
+
+    var $header,
+        $player,
+        isHidden,
+        allowAutoHide = false,
+        timerId;
+
+    function hide() {
+        if (!support.hasTouchScreen()) {
+            $header.fadeOut(500, function () {
+                isHidden = true;
+            });
+        }
+    }
+
+    function wakeUp() {
+        if (true === isHidden) {
+            isHidden = false;
+            $header.fadeIn(200);
+        } else {
+            clearTimeout(timerId);
+            timerId = setTimeout(hide, 2000);
+        }
+    }
+
+    function startAutoHide() {
+        if (!support.hasTouchScreen()) {
+            $header.delay(500).fadeOut(500, function () {
+                var player = $player.get(0);
+                // use capture phase to be compatible with firefox mac (@see https://bugzilla.mozilla.org/show_bug.cgi?id=836786)
+                if (player.addEventListener) {
+                    player.addEventListener("mousemove", wakeUp, true);
+                } else {
+                    $player.on("mousemove", wakeUp);
+                }
+                isHidden = true;
+            });
+        }
+    }
+
+    function stopAutoHide() {
+        if (!support.hasTouchScreen()) {
+            var player = $player.get(0);
+            if (player.addEventListener) {
+                player.removeEventListener("mousemove", wakeUp, true);
+            } else {
+                $player.off("mousemove");
+            }
+            clearTimeout(timerId);
+            $header.fadeIn(300);
+        }
+    }
+
+    function onPlayerScreenChanged(event, currentScreen) {
+        if ("video" === currentScreen) {
+            // video playing mode: auto hide header
+            allowAutoHide = true;
+            startAutoHide();
+        } else {
+            // welcome / end screen mode
+            allowAutoHide = false;
+            stopAutoHide();
+        }
+
+        if ("end" === currentScreen) {
+            // end screen: show replay button
+            $header.find("#btn-replay-video").show();
+        } else {
+            $header.find("#btn-replay-video").hide();
+        }
+    }
+
+    function onPlayerPanelChanged(event, currentPanel) {
+        if (null !== currentPanel) {
+            stopAutoHide();
+        } else if (allowAutoHide) {
+            startAutoHide();
+        }
+    }
+
+    function onVideoChanged() {
+        if (videoModel.shareUrl) {
+            $header.find("#btn-header-facebook, #btn-header-twitter, #btn-header-export").show();
+            // set social networks urls
+            var encodedUrl = encodeURIComponent(videoModel.shareUrl);
+            $header.find("#btn-header-facebook").attr("href", "http://www.facebook.com/sharer.php?u=" + encodedUrl);
+            $header.find("#btn-header-twitter").attr("href", "http://twitter.com/share?text="
+                + encodeURIComponent(videoModel.title) + "&related=fil_gouv&url=" + encodedUrl);
+        } else {
+            $header.find("#btn-header-facebook, #btn-header-twitter, #btn-header-export").hide();
+            $header.find("#btn-header-facebook, #btn-header-twitter").removeAttr("href");
+        }
+
+        // reduce title font size if the title doesn't fit in the available space
+        var $title = $header.find("h2");
+        $title.removeClass("long-title");
+        $title.text(videoModel.title);
+        if ($title.get(0).scrollHeight > $title.height()) {
+            $title.addClass("long-title");
+        }
+    }
+
+    return {
+        initialize: function () {
+            $(playerModel).on("player_screen_changed", onPlayerScreenChanged);
+            $(playerModel).on("player_panel_changed", onPlayerPanelChanged);
+            $(videoModel).on("video_changed", onVideoChanged);
+            $("#btn-replay-video").on("click", function () {
+                videoModel.load(videoModel.assetId);
+                playerModel.changeScreen("video");
+            });
+            $header = $("#header");
+            $player = $("#player");
+            if (support.hasTouchScreen()) {
+                $("#video-screen").addClass("fixed-header");
+            }
+            $header.find(".popup").on("click", function () {
+                window.open(this.href,
+                    this.id.replace(/[^a-z0-9]/ig, '_'), // clean name for IE8
+                    "width=626,height=436");
+
+                return false;
+            });
+            $header.find("#btn-header-export").on("click", function () {
+                playerModel.togglePanel("share");
+                return false;
+            });
+
+            $header.find("#btn-header-info").on("click", function () {
+                playerModel.togglePanel("info");
+                return false;
+            });
+        }
+    };
+});

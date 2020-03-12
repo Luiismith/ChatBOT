@@ -1,0 +1,67 @@
+/*global tarteaucitron */
+tarteaucitron.lang = {
+    "adblock": "Bonjour! Ce site joue la transparence et vous donne le choix des services tiers à activer.",
+    "adblock_call": "Merci de désactiver votre adblocker pour commencer la personnalisation.",
+    "reload": "Recharger la page",
+    
+    "alertBigScroll": "En continuant de défiler,",
+    "alertBigClick": "Ce site utilise des cookies afin de",
+    "alertBig": " vous proposer des vidéos, des boutons de partage, des messages de communication personnalisés, des remontées de contenus de plateformes sociales et des contenus animés et interactifs.",
+
+    "alertBigPrivacy": "Ce site utilise des cookies et vous donne le contrôle sur ce que vous souhaitez activer",
+    "alertSmall": "Gestion des services",
+    "acceptAll": "OK, tout accepter",
+    "personalize": "Personnaliser",
+    "close": "Fermer",
+    "title" : "Gestion de vos préférences sur les cookies",
+    "description" : "Sur Gouvernement.fr nous utilisons des outils de mesure d’audience pour comprendre le parcours de navigation des utilisateurs afin d’optimiser l’ergonomie et la mise en avant des contenus les plus pertinents.<br>Certaines fonctionnalités du site (partage de contenus sur les réseaux sociaux, lecteurs vidéos, contenus interactifs) font par ailleurs appel à des services proposés par des tiers. Ces fonctionnalités déposent des cookies permettant aux tiers d’identifier les sites que vous consultez et les contenus auxquels vous vous intéressez.<br>Ces deux types de cookies ne sont déposés que si vous donnez votre accord. Vous pouvez ci-dessous vous informer sur la nature de chacun des cookies déposés, les accepter ou les refuser. Ce choix est possible soit globalement pour l’ensemble du site et l’ensemble des services, soit service par service.<br><a href=\"/node/8494\">Plus d’informations sur les cookies.</a>",
+    "all": "Préférence pour tous les services",
+
+    "info": "Protection de votre vie privée",
+    "disclaimer": "",
+    "allow": "Autoriser",
+    "deny": "Interdire",
+    "noCookie": "Ce service ne dépose aucun cookie.",
+    "useCookie": "Ce service peut déposer",
+    "useCookieCurrent": "Ce service a déposé",
+    "useNoCookie": "Ce service n'a déposé aucun cookie.",
+    "more": "En savoir plus",
+    "source": "En savoir plus",
+    "credit": "Gestion des cookies par tarteaucitron.js",
+
+    "fallback": "est désactivé. <p>Autorisez le dépôt de cookies pour accéder à cette fonctionnalité.</p><br> ",
+    "fallbackText": "est désactivé. Autorisez le dépôt de cookies pour accéder à cette fonctionnalité.",
+
+    "ads": {
+        "title": "Campagnes d’informations gouvernementales",
+        "details": "Les campagnes d’informations gouvernementales permettent le partage d’informations utiles diffusées dans le cadre de grandes campagnes d’information, ou en cas de crise."
+    },
+    "analytic": {
+        "title": "Mesure d'audience",
+        "details": "La mesure de l’audience du site contribue à l’amélioration continue de son ergonomie, de sa navigation et de ses contenus."
+    },
+    "communication": {
+        "title": " Communication personnalisée",
+        "details": "La communication personnalisée permet de proposer des messages de communication personnalisés de la part du gouvernement sur notre site mais aussi sur les sites internet et/ou applications affichant les messages de communication du gouvernement."
+    },
+    "social": {
+        "title": "Réseaux sociaux",
+        "details": "Les réseaux sociaux permettent d’enrichir l’expérience utilisateur sur le site et aident à sa promotion via les partages. "
+    },
+    "video": {
+        "title": "Vidéos",
+        "details": "Les services de partage de vidéo permettent d'enrichir le site de contenus multimédia tout en conservant une vitesse de chargement optimale, et contribuent à son référencement.",//Les services de partage de vidéo permettent d'enrichir le site de contenu multimédia et augmentent sa visibilité."
+    },
+    "comment": {
+        "title": "Commentaires",
+        "details": "Les gestionnaires de commentaires facilitent le dépôt de vos commentaires et luttent contre le spam."
+    },
+    "support": {
+        "title": "Support",
+        "details": "Les services de support vous permettent d'entrer en contact avec l'équipe du site et d'aider à son amélioration."
+    },
+    "api": {
+        "title": "Contenus interactifs", //"APIs",
+        "details": "Les contenus interactifs permettent d’enrichir l’expérience utilisateur et de contribuer à une meilleure compréhension des informations disponibles sur le site."
+    }
+};

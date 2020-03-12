@@ -1,0 +1,86 @@
+/*global define, modulePath*/
+define([
+    "jquery",
+    "lib/support",
+    "js!dailymotion"
+], function ($, support) {
+    'use strict';
+
+    var isReady   = false,
+        autoStart = false;
+
+    return {
+        load: function (videoModel) {
+            var module = this;
+            autoStart = videoModel.autoPlay;
+
+            var playerDiv = $("#inner-player");
+            playerDiv.width("100%").height("100%");
+            var player = DM.player(playerDiv.get(0), {
+                "video": videoModel.dmId,
+                "params": {"GK_PV5": 1,
+                    "foreground": "#ffffff",
+                    "background": "#11549d",
+                    "id": "pmv6_player",
+                    "related": 0,
+                    "api": 1,
+                    "info": 0,
+                    "logo": 0,
+                    "autoplay": autoStart}
+            });
+            player.addEventListener("apiready", function(e)
+            {
+                videoModel.setState("ready");
+                isReady = true;
+            });
+            player.addEventListener("ended", function(e)
+            {
+                videoModel.setState("complete");
+            });
+            player.addEventListener("playing", function(e)
+            {
+                videoModel.setState("play");
+            });
+            player.addEventListener("pause", function(e)
+            {
+                videoModel.setState("pause");
+            });
+            player.addEventListener("timeupdate", function(e)
+            {
+                videoModel.setTime(player.currentTime);
+            });
+            player.addEventListener("error", function(e)
+            {
+                videoModel.setState("error");
+            });
+            player.addEventListener("webkitfullscreenchange", function(e)
+            {
+                videoModel.setFullScreen(player.fullscreen);
+            });
+            player.addEventListener("volumechange", function(e)
+            {
+                videoModel.setVolume(player.volume);
+            });
+
+            $(videoModel).on("video_load", function(e) {
+                if (isReady) {
+                    playerDiv.empty();
+                    isReady = false;
+                }
+                autoStart = true;
+            });
+            $(videoModel).on("subtitles_changed", function(e, language) {
+                module.setSubtitles(language);
+            });
+            $(videoModel).on("video_seek_request", function(e, timeInSeconds) {
+                player.seek(parseInt(timeInSeconds, 10));
+            });
+        },
+        play: function () {
+            player.play();
+        },
+        pause: function () {
+            player.pause();
+        }
+    };
+});

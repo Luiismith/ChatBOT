@@ -1,0 +1,143 @@
+(function() {
+  // Préparation des variables.
+  var $, SocialController,
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+  $ = this.jQuery;
+
+  // Class de gestion des interactions sociales de la page.
+  SocialController = (function() {
+
+    function SocialController(options) {
+      // Bindings.
+      this.fbShare = __bind(this.fbShare, this);
+      this.popupShare = __bind(this.popupShare, this);
+      this.register = __bind(this.register, this);
+      this.fbInit = __bind(this.fbInit, this);
+
+      // Options.
+      this.fbAppId = (options.facebookAppId) ? options.facebookAppId : null;
+      this.popupParams = 'height=380,width=660,resizable=0,toolbar=0,menubar=0,status=0,location=0,scrollbars=0';
+    }
+
+    // Initialisation du SDK javascript facebook.
+    SocialController.prototype.fbInit = function() {
+      FB.init({
+        appId: this.fbAppId,
+        status: false,
+        cookie: true,
+        xfbml: true
+      });
+    };
+
+    // Enregistrement d'un nouveau bouton et activation des interactions.
+    SocialController.prototype.register = function(type, button) {
+      var app;
+      app = this;
+      var $button = button.jquery ? button : $(button);
+      // Si bouton de partage sur facebook et qu'une application a été
+      // référencée.
+      if (type === 'facebook' && this.fbAppId && $button.attr('data-share') != 'popup') {
+        $button.click(function(e) {
+          e.preventDefault();
+          // Partage via le SDK Facebook.
+          app.fbShare($(this));
+        });
+      } else {
+        $button.click(function(e) {
+          e.preventDefault();
+          // Partage via popup.
+          app.popupShare($(this));
+          return false;
+        });
+      }
+    };
+
+    // Partage via popup.
+    SocialController.prototype.popupShare = function($button) {
+      window.open($button.attr('href'), 'Partager', this.popupParams);
+    };
+
+    // Partage via le SDK Facebook.
+    SocialController.prototype.fbShare = function($button) {
+      var params;
+      // Paramètres de partage récupérés à partir du lien.
+      params = {
+        method: 'feed',
+        link: $button.data('href'),
+        name: $button.data('title') || null,
+        picture: $button.data('picture') || null,
+        caption: $button.data('caption') || null,
+        description: $button.data('description') || null
+      };
+      // Partage.
+      FB.ui(params, this.shareSuccess);
+    };
+
+    // Fonctions exécutée après le partage.
+    SocialController.prototype.shareSuccess = function(response) {};
+
+    return SocialController;
+  })();
+
+
+  this.Drupal.behaviors.matignon_partage = {
+    attach: function(context, settings) {
+      $('body').once(function() {
+        var id, sdk;
+        // Création du controller des interactions sociales.
+        if(settings.pmv6_keys && settings.pmv6_keys.facebookAppId)
+          window.controller = new SocialController({
+            facebookAppId: settings.pmv6_keys.facebookAppId
+          });
+        if(typeof tarteaucitron === "undefined" && typeof controller !== "undefined"){ // Si TC > géré dans TC
+          // Initialisation asynchrone du SDK javascript Facebook.
+          if (controller.fbAppId) {
+            id = 'facebook-jssdk';
+            if (!$(id).length) {
+              sdk = $.getScript("//connect.facebook.net/fr_FR/all.js");
+              sdk.id = id;
+              sdk.async = true;
+            }
+            window.fbAsyncInit = controller.fbInit;
+          }
+
+          // Enregistrement et "activation" des boutons de partage présents sur la
+          // page.
+          $('.boutons-partage .bouton-social').each(function() {
+            var $bouton;
+            $bouton = $(this);
+            if ($bouton.hasClass('bouton-partage-facebook')) {
+              controller.register('facebook', $bouton);
+            } else {
+              controller.register('popup', $bouton);
+            }
+          });
+
+        }
+      });
+$('.linkVideoPblv').live('click', function(){
+  
+     $('.boutons-partage .bouton-social').each(function() {
+
+        var $bouton;
+
+        $bouton = $(this);
+        
+        if ($bouton.hasClass('bouton-partage-facebook')) {
+          controller.register('facebook', $bouton);
+        } else {
+          controller.register('popup', $bouton);
+        }
+      });
+
+    });
+
+
+
+
+
+    }
+  };
+
+}).call(this);

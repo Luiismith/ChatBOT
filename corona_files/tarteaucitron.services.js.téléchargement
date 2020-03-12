@@ -1,0 +1,1042 @@
+/*global tarteaucitron, ga, Shareaholic, stLight, clicky, top, google, Typekit, FB, ferankReady, IN, stButtons, twttr, PCWidget*/
+/*jslint regexp: true, nomen: true*/
+// Wemap
+tarteaucitron.services.calameo = {
+  "key": "calameo",
+  "type": "api",
+  "name": "Calameo",
+  "uri": "http://fr.calameo.com/privacy#cookies",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    tarteaucitron.fallback(['calameo-wrapper'], function (x) {
+      var url =  x.getAttribute("src") || x.getAttribute("data-src"),
+          width = x.getAttribute("width") || x.getAttribute("data-width") || "100%",
+          height = x.getAttribute("height") ||  x.getAttribute("data-height") || "100%",
+          style = x.getAttribute('style') ||  x.getAttribute("data-style") || "",
+          bottom = x.getAttribute('data-bottom') || "70%";
+      return '<iframe src="' + url + '" width="' + width + '" height="' + height + '" style="' + style +'" frameborder="0" scrolling="no" allowtransparency allowfullscreen></iframe>';
+    });
+  },
+  "fallback": function () {
+    "use strict";
+    var id = 'calameo';
+    tarteaucitron.fallback(['calameo-wrapper'], function (elem) {
+      return tarteaucitron.engage(id);
+    });
+  }
+};
+// dailymotion (PMV6)
+tarteaucitron.services.dailymotion = {
+    "key": "dailymotion",
+    "type": "video",
+    "name": "Dailymotion",
+    "uri": "http://www.dailymotion.com/legal/privacy",
+    "needConsent": false,
+    "cookies": ['ts', 'dmvk', 'hist', 'v1st', 's_vi'],
+    "js": function () {
+        "use strict";
+        tarteaucitron.fallback(['dailymotion-wrapper','dailymotion-player', 'player-wrapper'], function (x) {
+            var video_id = x.getAttribute("videoID"),
+                video_src = x.getAttribute("src") || x.getAttribute("data-src"),
+                video_title = x.getAttribute("title"),
+                video_url = video_id ? '//www.dailymotion.com/embed/video/' + video_id : video_src,
+                video_width = x.getAttribute("width"),
+                frame_width = 'width=',
+                video_height = x.getAttribute("height"),
+                frame_height = 'height=',
+                video_frame,
+                params = 'info=' + x.getAttribute("showinfo") + '&autoPlay=' + x.getAttribute("autoplay");
+            
+            if (video_url === undefined) {
+                return "";
+            }
+            /*
+            if (video_width !== undefined) {
+                frame_width += '"' + video_width + '" ';
+            } else {
+                frame_width += '"" ';
+            }
+            if (video_height !== undefined) {
+                frame_height +=  '"' + video_height + '" ';
+            } else {
+                frame_height += '"" ';
+            }
+            */
+            video_frame = '<iframe src="'+ video_url +'?' + params + '" ' + 'width="100%"' + 'height="100%"' + ' frameborder="0" title="'+ video_title +'" allowfullscreen></iframe>';
+            return video_frame;
+        });
+    },
+    "fallback": function () {
+        "use strict";
+        var id = 'dailymotion';
+        tarteaucitron.fallback(['dailymotion-wrapper','dailymotion-player', 'player-wrapper'], function (elem) {
+            elem.style.width = elem.getAttribute('width') + 'px';
+            elem.style.height = elem.getAttribute('height') + 'px';
+            return tarteaucitron.engage(id);
+        });
+    }
+};
+
+// doubleclick (PMV6)
+tarteaucitron.services.doubleclick = {
+  "key": "doubleclick",
+  "type": "communication",
+  "name": "Google Marketing Platform",
+  "uri": "https://marketingplatform.google.com/intl/fr_ALL/about/",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    tarteaucitron.fallback(['doubleclick-wrapper'], function (x) {
+      var id = x.getAttribute("data-id") || "",
+          width = 1,
+          height = 1,
+          url = x.getAttribute("src") || x.getAttribute("data-src"),
+          axel = Math.random() + "",
+          a = axel * 10000000000000;
+      return '<iframe src="'+ url + 'num=' + a + '?" width="' + width + '" height="' + height + '" id="' + id + '" frameborder="0" style="display:none;"></iframe>';
+
+    });
+  },
+};
+
+// facebook pixel
+tarteaucitron.services.facebookpixel = {
+  "key": "facebookpixel",
+  "type": "communication",
+  "name": "Facebook Pixel",
+  "uri": "https://fr-fr.facebook.com/business/help/www/651294705016616",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    var n;
+    var domfb = document.getElementById('socialpixel') ? document.getElementById('socialpixel').getAttribute('data-facebookpixelid') : null;
+    var fpid =  domfb || window.facebookpixelid ||tarteaucitron.user.facebookpixelId || null;
+    if(!fpid)return;
+    if(window.fbq)return;
+    n=window.fbq=function(){n.callMethod ? n.callMethod.apply(n,arguments):n.queue.push(arguments)} ;
+    if(!window._fbq) window._fbq=n;
+    n.push=n;
+    n.loaded=!0;
+    n.version='2.0';
+    n.queue=[];
+
+    tarteaucitron.addScript('https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', fpid);
+    fbq('track', 'PageView');
+
+    if (typeof tarteaucitron.user.facebookpixelMore === 'function') {
+      tarteaucitron.user.facebookpixelMore();
+    }
+  }
+};
+
+// twitter website tag
+tarteaucitron.services.twitterpixel = {
+  "key": "twitterpixel",
+  "type": "communication",
+  "name": "Twitter Website Tag",
+  "uri": "https://business.twitter.com/fr/help/campaign-measurement-and-analytics/conversion-tracking-for-websites.html",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    var s;
+    var domtw = document.getElementById('socialpixel') ? document.getElementById('socialpixel').getAttribute('data-twitterpixelid') : null;
+    var tpid =  domtw || window.twitterpixelid || null;
+    if(!tpid)return;
+    if (window.twq) return;
+    s = window.twq = function () {
+      s.exe ? s.exe.apply(s, arguments) : s.queue.push(arguments);
+    }
+    if (!window._twq) window._twq = s;
+    s.version = '1.1';
+    s.queue = [];
+    tarteaucitron.addScript('//static.ads-twitter.com/uwt.js');
+    var twitterpixelid = window.twitterpixelid || tpid;
+    twq('init', twitterpixelid);
+    twq('track', 'PageView');
+  }
+};
+
+// snapchat pixel
+tarteaucitron.services.snapchatpixel = {
+  "key": "snapchatpixel",
+  "type": "communication",
+  "name": "Snapchat Pixel",
+  "uri": "https://businesshelp.snapchat.com/en-US/article/snap-pixel-about",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    var domsn = document.getElementById('socialpixel') ? document.getElementById('socialpixel').getAttribute('data-snapchatpixelid') : null;
+    var snpid =  domsn || window.snapchatpixelid || null;
+    if(!snpid) return;
+    if(window.snaptr)return;
+    var a=window.snaptr=function() {a.handleRequest?a.handleRequest.apply(a,arguments):a.queue.push(arguments)};
+    a.queue=[];
+    tarteaucitron.addScript('https://sc-static.net/scevent.min.js');
+    var snapid = window.snapchatpixelid || domsn;
+    snaptr('init', snapid, {
+      'user_email': '__INSERT_USER_EMAIL__'
+    });
+    snaptr('track', 'PAGE_VIEW');
+  }
+};
+
+// facebook pixel
+tarteaucitron.services.linkedininsight = {
+  "key": "linkedininsight",
+  "type": "communication",
+  "name": "LinkedIn Insight ",
+  "uri": "https://www.linkedin.com/help/lms/answer/67513/linkedin-conversion-tracking-overview?lang=fr",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    var domli = document.getElementById('socialpixel') ? document.getElementById('socialpixel').getAttribute('data-linkedinpixelid') : null;
+    var lipid =  domli || window.linkedinpixelid || null;
+    if(!lipid) return;
+    var _linkedin_partner_id = window.linkedininsightid || lipid;
+    window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
+    window._linkedin_data_partner_ids.push(_linkedin_partner_id);
+    tarteaucitron.addScript('https://snap.licdn.com/li.lms-analytics/insight.min.js');
+  }
+};
+
+//E-regie (PMV6)
+tarteaucitron.services.eregie = {
+  "key": "eregie",
+  "type": "ads",
+  "name": "AppNexus",
+  "uri": "https://www.appnexus.com/en/company/platform-privacy-policy#choices",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    var eregiebloc = document.querySelector('.accueil-bloc-e-regie');
+    if(! eregiebloc) return;
+    eregiebloc.innerHTML = '';
+    var OAS_url = 'https://oasc-eu1.247realmedia.com/RealMedia/ads/';
+    var OAS_sitepage = 'www.gouvernement.fr';
+    var OAS_listpos = 'Middle1,Position1';
+    var OAS_query = '';
+    var OAS_target = '_top';
+    //end of configuration
+    var OAS_version = 10;
+    var OAS_rn = '001234567890'; OAS_rns = '1234567890';
+    var OAS_rn = new String (Math.random());
+    var OAS_rns = OAS_rn.substring (2, 11);
+    function OAS_NORMAL(pos) {
+      tarteaucitron.fallback(['accueil-bloc-e-regie'], function (elem) {
+        var htmlresult =   '<A HREF="' + OAS_url + 'click_nx.ads/' + OAS_sitepage + '/1' + OAS_rns + '@' + OAS_listpos + '!' + pos + '?' + OAS_query + '" TARGET=' + OAS_target + '>';
+        htmlresult += '<IMG SRC="' + OAS_url + 'adstream_nx.ads/' + OAS_sitepage + '/1' + OAS_rns + '@' + OAS_listpos + '!' + pos + '?' + OAS_query + '" BORDER=0></A>';
+        return htmlresult;
+      });
+    }
+    OAS_version = 11;
+    if ((navigator.userAgent.indexOf('Mozilla/3') !== -1) || (navigator.userAgent.indexOf('Mozilla/4.0 WebTV') !== -1))
+      OAS_version = 10;
+    /*   if (OAS_version >= 11)
+         tarteaucitron.addScript(OAS_url + 'adstream_mjx.ads/' + OAS_sitepage + '/1' + OAS_rns + '@' + OAS_listpos + '?' + OAS_query, null, null, null, null, null, false);*/
+
+    function OAS_AD(pos) {
+      if (OAS_version >= 11){
+        document.write_old = document.write; // hack document.write in script
+        document.write = function(elem){
+          eregiebloc.innerHTML += elem;
+        }; //end hack document.write in script
+        tarteaucitron.addScript(OAS_url + 'adstream_mjx.ads/' + OAS_sitepage + '/1' + OAS_rns + '@' + OAS_listpos + '?' + OAS_query, null, function(){
+          OAS_RICH(pos);
+          document.write = document.write_old; // reset document.write;
+        });
+      }
+      else{
+        OAS_NORMAL(pos);
+      }
+    }  //-->
+    OAS_AD('Middle1');
+  },
+  "fallback" : function () {
+    "use strict";
+    tarteaucitron.fallback(['accueil-bloc-e-regie'], function (elem) {
+      return tarteaucitron.engage('eregie');
+    });
+  }
+};
+
+// facebook (PMV6)
+tarteaucitron.services.facebook = {
+    "key": "facebook",
+    "type": "social",
+    "name": "Facebook",
+    "uri": "https://www.facebook.com/help/cookies/",
+    "needConsent": true,
+    "cookies": [],
+    "js": function () {
+      "use strict";
+      var elems = document.querySelectorAll('.bouton-partage-fb-wrapper'), len = elems.length;
+      if(elems){
+        var controller = window.controller || {};
+        if (controller.fbAppId) {
+          var id = 'facebook-jssdk';
+          if (!document.getElementById(id)) {
+    /*        var sdk = $.getScript("//connect.facebook.net/fr_FR/all.js");
+            sdk.id = id;
+            sdk.async = true;*/
+            tarteaucitron.addScript("//connect.facebook.net/fr_FR/all.js", id);
+          }
+          window.fbAsyncInit = window.controller.fbInit;
+        }
+
+        for (var i=0; i<len; i++) {
+          elems[i].style.cssText = 'display:inline !important';
+          var noreload = elems[i].querySelector('.pmv6-tc-modal');if(noreload) {noreload.parentNode.removeChild(noreload); elems[i].innerHTML = elems[i].innerHTML.split('Autoriser').join('');}//TEMP Line for not showing popup when no reload
+
+          var btn = elems[i].querySelector('.bouton-partage');
+          if(btn && controller.register){
+            var fclass = btn.classList;
+            if(fclass && fclass.value.indexOf('bouton-partage-facebook') > -1)
+              controller.register('facebook', btn);
+            else
+              controller.register('popup', btn);
+          }
+        }
+      }
+    },
+    "fallback": function () {
+        "use strict";
+        var id = 'facebook';
+        tarteaucitron.fallback(['bouton-partage-fb-wrapper'], function(x) {
+          x.style.cssText = 'display:inline !important';
+          return tarteaucitron.engage(id);
+        });
+    }
+};
+
+// google maps
+tarteaucitron.services.googlemaps = {
+  "key": "googlemaps",
+  "type": "api",
+  "name": "Google Maps",
+  "uri": "http://www.google.com/ads/preferences/",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    var mapOptions,
+        map,
+        uniqIds = [],
+        i;
+    tarteaucitron.addScript("//maps.googleapis.com/maps/api/js?key=AIzaSyAFbYyrh4TeCH2rO7wJuQbpRUpNf3kpIXo", null, function() {
+      tarteaucitron.fallback(['maps-container'], function () {
+
+        return ' <div id="google-maps" class="googlemaps-canvas"></div>\n' +
+            '            <div class="hidden googlemaps-hidden">\n' +
+            '        <div class="zoom hidden">16</div>\n' +
+            '                  <div class="marker" data-lat="-21.115141" data-lng="55.536384">\n' +
+            '            <p>La Réunion</p>\n' +
+            '          </div>\n' +
+            '                    <div class="marker" data-lat="-12.8275" data-lng="45.166244000000006">\n' +
+            '            <p>Mayotte</p>\n' +
+            '          </div>\n' +
+            '                    <div class="marker" data-lat="-22.1278505" data-lng="166.5254268">\n' +
+            '            <p>Nouvelle Calédonie</p>\n' +
+            '          </div>\n' +
+            '                    <div class="marker" data-lat="16.2808666" data-lng="-61.50711239999998">\n' +
+            '            <p>Guadeloupe</p>\n' +
+            '          </div>\n' +
+            '                    <div class="marker" data-lat="14.4865942" data-lng="-61.027786100000014">\n' +
+            '            <p>Martinique</p>\n' +
+            '          </div>\n' +
+            '                    <div class="marker" data-lat="4.9416136" data-lng="-52.31747589999998">\n' +
+            '            <p>Guyane</p>\n' +
+            '          </div>\n' +
+            '                    <div class="marker" data-lat="47.0975664" data-lng="-56.3750263">\n' +
+            '            <p>Saint-Pierre-et-Miquelon</p>\n' +
+            '          </div>\n' +
+            '                    <div class="marker" data-lat="17.9032671" data-lng="-62.8080683">\n' +
+            '            <p>Saint-Barthélemy</p>\n' +
+            '          </div>\n' +
+            '                    <div class="marker" data-lat="18.0687173" data-lng="-63.038867400000015">\n' +
+            '            <p>Saint-Martin</p>\n' +
+            '          </div>\n' +
+            '                    <div class="marker" data-lat="-14.2921494" data-lng="-178.1625232">\n' +
+            '            <p>Wallis-Et-Futuna</p>\n' +
+            '          </div>\n' +
+            '                    <div class="marker" data-lat="-17.54147039999999" data-lng="-149.56413750000002">\n' +
+            '            <p>Polynésie Française</p>\n' +
+            '          </div>\n' +
+            '      </div>';
+      });
+
+      var mapDiv = document.getElementById('google-maps');
+      if (mapDiv) {
+        var markers = document.querySelectorAll('.marker');
+        var args = {
+          scrollwheel: false,
+          zoom: parseInt(document.querySelector('.zoom').innerHTML),
+          center: new google.maps.LatLng(0, 0),
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+
+        map = new google.maps.Map(mapDiv, args);
+        map.markers = [];
+
+        for (var i = 0; i < markers.length; i++) {
+          add_marker(markers[i], map);
+        }
+        ;
+        // center map
+        center_map(map);
+      }
+
+      function add_marker(mark, map) {
+        // var
+        var latlng = new google.maps.LatLng(mark.getAttribute('data-lat'), mark.getAttribute('data-lng'));
+
+        // create marker
+        var marker = new google.maps.Marker({
+          position: latlng,
+          map: map
+        });
+
+        // add to array
+        map.markers.push(marker);
+
+        // if marker contains HTML, add it to an infoWindow
+        if (mark.innerHTML) {
+          // create info window
+          var infowindow = new google.maps.InfoWindow({
+            content: mark.innerHTML
+          });
+
+          // show info window when marker is clicked
+          google.maps.event.addListener(marker, 'click', function () {
+            infowindow.open(map, marker);
+
+          });
+        }
+      } // en add_marker
+      function center_map(map) {
+        // vars
+        var bounds = new google.maps.LatLngBounds();
+
+        // loop through all markers and create bounds
+        for (var i = 0; i < map.markers.length; i++) {
+          var marker = map.markers[i];
+          var latlng = new google.maps.LatLng(marker.position.lat(), marker.position.lng());
+          bounds.extend(latlng);
+        }
+
+        // only 1 marker?
+        if (map.markers.length == 1) {
+          // set center of map
+          map.setCenter(bounds.getCenter());
+          map.setZoom(parseInt(document.querySelector('.zoom').innerHTML));
+        }
+        else {
+          // fit to bounds
+          map.fitBounds(bounds);
+        }
+      }
+    });
+  },
+  "fallback": function () {
+    "use strict";
+    var id = 'googlemaps';
+    tarteaucitron.fallback(['maps-container'], tarteaucitron.engage(id));
+  }
+};
+/*
+// google maps
+tarteaucitron.services.googlemaps = {
+    "key": "googlemaps",
+    "type": "api",
+    "name": "Google Maps",
+    "uri": "http://www.google.com/ads/preferences/",
+    "needConsent": true,
+    "cookies": [],
+    "js": function () {
+        "use strict";
+        var mapOptions,
+            map,
+            uniqIds = [],
+            i;
+        tarteaucitron.user.googlemapsKey = "AIzaSyAFbYyrh4TeCH2rO7wJuQbpRUpNf3kpIXo";
+        tarteaucitron.addScript('//maps.googleapis.com/maps/api/js?v=3.exp&key=' + tarteaucitron.user.googlemapsKey + '&callback=tac_googlemaps_callback');
+
+        window.tac_googlemaps_callback = function () {
+            tarteaucitron.fallback(['googlemaps-canvas'], function (x) {
+                var uniqId = '_' + Math.random().toString(36).substr(2, 9);
+                uniqIds.push(uniqId);
+                return '<div id="' + uniqId + '" zoom="' + x.getAttribute('zoom') + '" latitude="' + x.getAttribute('latitude') + '" longitude="' + x.getAttribute('longitude') + '" style="width:' + x.offsetWidth + 'px;height:' + x.offsetHeight + 'px"></div>';
+            });
+
+            for (i = 0; i < uniqIds.length; i += 1) {
+                mapOptions = {
+                    zoom: parseInt(document.getElementById(uniqIds[i]).getAttribute('zoom'), 10),
+                    center: new google.maps.LatLng(parseFloat(document.getElementById(uniqIds[i]).getAttribute('latitude'), 10), parseFloat(document.getElementById(uniqIds[i]).getAttribute('longitude'), 10))
+                };
+                map = new google.maps.Map(document.getElementById(uniqIds[i]), mapOptions);
+            }
+        };
+    },
+    "fallback": function () {
+        "use strict";
+        var id = 'googlemaps';
+        tarteaucitron.fallback(['googlemaps-canvas'], tarteaucitron.engage(id));
+    }
+};
+*/
+
+// Instagram (PMV6)
+tarteaucitron.services.instagram = {
+  "key": "instagram",
+  "type": "social",
+  "name": "Instagram",
+  "uri": "https://help.instagram.com/155833707900388",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    var instafeedContainer = document.getElementById('instafeed');
+    if( instafeedContainer !== null) {
+      instafeedContainer.innerHTML = "";
+      var count = 0;
+      var feed = new Instafeed(
+          {
+            get: 'user',
+            target: 'instafeed',
+            accessToken: instagramConf.token,
+            userId: '1514455101',
+            sortBy: 'most-recent',
+
+            limit: instagramConf.limit,
+            resolution: 'standard_resolution',
+            filter: function (image) {
+              if (count <= 9 && (instagramConf.video === '1' || image.type != "video")) {
+                var text = '';
+                if (count == 0 || count == 5) {
+                  image.customTagOpen = '<div class="rowInstaFeed">';
+                  image.customTagClose = '';
+                }
+                else if (count == 4 || count == 9) {
+                  image.customTagOpen = '';
+                  image.customTagClose = '</div>';
+                }
+                count += 1;
+                if (image.caption != null) {
+                  text = image.caption.text;
+                }
+                var message1 = text.replace(/"/g, "&quot;");
+                image.message = message1;
+                return true;
+              }
+              else {
+                return false;
+              }
+
+            },
+            template: '{{model.customTagOpen}}<div class="instaCell"><a class="gallery1" rel="gal1" data="{{model.message}}" href="{{image}}"><img height="130" width="130" src="{{image}}" /></a></div>{{model.customTagClose}}',
+
+            after: function () {
+              jQuery('a.gallery1').colorbox(
+                  {
+                    rel: 'gal1', title: function () {
+                      return '<div style="color:#000;padding:5px;font-weight:bold;font-size:14px;">' + '' + jQuery(this).attr('data') + '</div>';
+                    }
+                  }
+              );
+            }
+
+          }
+      );
+      //var countMob = 0;
+      /*var mobfeed = new Instafeed(
+            {
+                get: 'user',
+                target: 'instafeedMob',
+                accessToken: instagramAcessToken,
+                userId: '1514455101',
+                sortBy: 'most-recent',
+                limit: 20,
+                resolution: 'standard_resolution',
+                filter: function(image) {
+                    if (image.type == "image" && countMob <= 5) {
+                        if (countMob == 0 || countMob == 2 || countMob == 4 || countMob == 6 || countMob == 8) {
+                            image.customTagOpenCol = '<div class="rowInstaFeed">';
+                            image.customTagCloseCol = '';
+                        }
+                        else if (countMob == 1 ||countMob == 3 || countMob == 5 || countMob == 7 || countMob == 9) {
+                            image.customTagOpenCol = '';
+                            image.customTagCloseCol = '</div>';
+                        }
+                        countMob += 1;
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                },
+                template: '{{model.customTagOpenCol}}<div class="instaCell"><a class="gallery2"  data-link="{{image}}" href="{{link}}" target="_blank"><img height="130" width="130" src="{{image}}" /></a></div>{{model.customTagCloseCol}}',
+
+            }
+        );
+        mobfeed.run();
+        */
+      feed.run();
+
+    }
+  },
+  "fallback" : function () {
+    "use strict";
+    var instafeedContainer = document.getElementById('instafeed');
+    if( instafeedContainer !== null)
+      instafeedContainer.innerHTML = tarteaucitron.engage('instagram');
+  }
+};
+
+//Infogram (PMV6)
+tarteaucitron.services.infogram = {
+  "key": "infogram",
+  "type": "api",
+  "name": "Infogram",
+  "uri": "https://infogram.com/privacy",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    tarteaucitron.fallback(['infogram-wrapper','infogr.am-wrapper'], function (x) {
+      var id = x.getAttribute("data-id") || x.getAttribute("id") ||"",
+          url = x.getAttribute("data-src") || x.getAttribute("src"),
+          type = url.indexOf('/js/embed.js') > -1 ? "script" : "iframe",
+          title =  x.getAttribute("data-title") ,
+          width = x.getAttribute("data-width") || 1,
+          height = x.getAttribute("data-height") || 1;
+      if(type !== "iframe"){
+        var tag = document.createElement("script");
+        tag.src = url;
+        tag.id = id;
+        tag.title = title;
+        tag.type = 'text/javascript';
+        tarteaucitron.insertAfter(tag, x);
+        return '';
+      }
+      else {
+        return '<iframe src="'+ url + '" width="' + width + '" height="' + height + '" id="' + id + '" frameborder="0"></iframe>';
+      }
+    });
+  },
+  "fallback" : function () {
+    "use strict";
+    tarteaucitron.fallback(['infogram-wrapper','infogr.am-wrapper'], tarteaucitron.engage('infogram'));
+  },
+};
+
+//MAPBOX (PMV6)
+tarteaucitron.services.mapbox = {
+  "key": "mapbox",
+  "type": "api",
+  "name": "Mapbox",
+  "uri": "https://www.mapbox.com/privacy/",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    tarteaucitron.fallback(['mapbox-wrapper'], function (x) {
+      var id = x.getAttribute("data-id") || x.getAttribute("id") ||"",
+          url = x.getAttribute("data-src") || x.getAttribute("src"),
+          title =  x.getAttribute("data-title") || "" ,
+          width = x.getAttribute("width") || x.getAttribute("data-width") || 1,
+          height = x.getAttribute("height") || x.getAttribute("data-height") || 1;
+        return '<iframe src="'+ url + '" width="' + width + '" height="' + height + '" id="' + id + '" frameborder="0"></iframe>';
+    });
+  },
+  "fallback" : function () {
+    "use strict";
+    tarteaucitron.fallback(['mapbox-wrapper'], tarteaucitron.engage('mapbox'));
+  },
+};
+
+// slideshare
+tarteaucitron.services.slideshare = {
+  "key": "slideshare",
+  "type": "api",
+  "name": "SlideShare",
+  "uri": "https://www.linkedin.com/legal/privacy-policy",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    tarteaucitron.fallback(['slideshare-wrapper'], function (x) {
+      var id = x.getAttribute("data-id") || false,
+          src = x.getAttribute("src") || x.getAttribute("data-src"),
+          url = id ? '//www.slideshare.net/slideshow/embed_code/' + id : src,
+          width = x.getAttribute("width"),
+          height = x.getAttribute("height"),
+          style = x.getAttribute('style') || "";
+      return '<iframe src="' + url + '" width="' + width + '" height="' + height + '" style="' + style +'" frameborder="0" scrolling="no" allowtransparency allowfullscreen></iframe>';
+    });
+  },
+  "fallback": function () {
+    "use strict";
+    var id = 'slideshare';
+    tarteaucitron.fallback(['slideshare-wrapper'], function (elem) {
+      elem.style.width = elem.getAttribute('width') + 'px';
+      elem.style.height = elem.getAttribute('height') + 'px';
+      return tarteaucitron.engage(id);
+    });
+  }
+};
+
+//Storify (PMV6)
+tarteaucitron.services.storify = {
+  "key": "storify",
+  "type": "api",
+  "name": "Storify",
+  "uri": "http://storify.com",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    tarteaucitron.fallback(['storify-wrapper'], function (x) {
+      return ''; // Storify end of service
+      var id = x.getAttribute("data-id") || x.getAttribute("id") || "",
+          url = x.getAttribute("data-src") || x.getAttribute("src"),
+          type = url.indexOf('.js') > -1 ? "script" : "iframe",
+          title =  x.getAttribute("data-title") || x.getAttribute("title") ||"" ,
+          width = x.getAttribute("data-width") || x.getAttribute("width") || 1,
+          height = x.getAttribute("data-height") || x.getAttribute("height")|| 1,
+          output = "";
+      if(type !== "iframe"){
+        var tag = document.createElement("script");
+        tag.src = url;
+        tag.id = id;
+        tag.title = title;
+        tag.type = 'text/javascript';
+        tarteaucitron.insertAfter(tag, x);
+
+      }
+      else {
+        output =  '<iframe src="'+ url + '" width="' + width + '" height="' + height + '" id="' + id + '" frameborder="0"></iframe>';
+      }
+      return output;
+    });
+  },
+  "fallback" : function () {
+    "use strict";
+    tarteaucitron.fallback(['storify-wrapper'],'');
+  },
+};
+
+//Spark (PMV6)
+tarteaucitron.services.spark = {
+  "key": "spark",
+  "type": "api",
+  "name": "Adobe Spark",
+  "uri": "https://www.adobe.com/privacy/cookies.html",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    tarteaucitron.fallback(['spark-wrapper'], function (x) {
+      var link = document.querySelector('.asp-embed-link');
+      var url = link.getAttribute('href');
+      if(!url && link){
+        link.style.display = "block";
+        return '';
+      }
+      url += url.slice(-1) == "/" ? 'embed.html' : "/embed.html";
+      x.setAttribute('style',"max-width: 1300px; min-width: 250px; position: relative; padding-bottom: 66.6667%; height: 0px; overflow: hidden; box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 12px 0px;")
+      return '<iframe src="' + url + '"   frameborder="0" allowtransparency allowfullscreen style="width: 100%; height: 100%; position: absolute; top: 0px; left: 0px; border: 1px solid rgb(221, 221, 221); border-radius: 0px;"></iframe>';
+    });
+  },
+  "fallback" : function () {
+    "use strict";
+    var id = 'spark';
+    tarteaucitron.fallback(['spark-wrapper'],tarteaucitron.engage(id));
+  },
+};
+
+tarteaucitron.services.smarttag = {
+  "key": "smarttag",
+  "type": "analytic",
+  "name": "AT Internet",
+  "target" : 'document',
+  "uri": "/donnees-personnelles-et-cookies#at",
+  "needConsent": true,
+  "allowedByDefault" : true,
+  "cookies": [],
+  "executeOnce": false,
+  "js": function () {
+    "use strict";
+    var smarttag_js = window.smarttag_js || false;
+    var smarttag_conf = window.smarttag_config || {};
+    var pmv6 = window.pmv6 || {};
+    var initialized = window.stinitialized || window.parent.stinitialized || false;
+    if (smarttag_js) {
+      tarteaucitron.addScript(smarttag_js, 'smarttag',function(){
+        var tag = window.tag = window.tag || new ATInternet.Tracker.Tag(smarttag_conf);
+
+        if(pmv6.atPageVars){
+          tag.page.set(pmv6.atPageVars);
+        }
+
+        if(pmv6.atCustomVars){
+          tag.customVars.set(pmv6.atCustomVars);
+        }
+        if(pmv6.atSearchVars){
+          tag.internalSearch.set(pmv6.atSearchVars);
+        }
+        if(!pmv6.blockTag){
+          tag.dispatch();
+        }
+        pmv6.blockTag = false;
+        //window.addEventListener("tarteaucitron_loaded", function(e) {
+          if (pmv6.setATClicks) {
+            pmv6.setATClicks();
+          }
+        //});
+        if(!initialized){
+          var loadPageVars =  window.pmv6.loadPageVars = window.pmv6.atPageVars ? JSON.parse(JSON.stringify(window.pmv6.atPageVars)) : false;
+          window.stinitialized = window.parent.stinitialized = true;
+        /*  if (pmv6.setATClicks) {
+            pmv6.setATClicks();
+          }*/
+        }
+      });
+
+    }
+  }
+};
+
+// timelinejs (PMV6)
+tarteaucitron.services.timelinejs = {
+  "key": "timelinejs",
+  "type": "api",
+  "name": "Timeline JS",
+  "uri": "http://timeline.knightlab.com/#help",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    tarteaucitron.fallback(['timelinejs-wrapper', 'timelinejs-canvas','timeline3-wrapper', 'timeline-canvas'], function (x) {
+      var spreadsheet_id = x.getAttribute("spreadsheet_id") || false,
+          width = x.getAttribute("width"),
+          height = x.getAttribute("height"),
+          lang = x.getAttribute("lang"),
+          font = x.getAttribute("font"),
+          map = x.getAttribute("map"),
+          start_at_end = x.getAttribute("start_at_end"),
+          hash_bookmark = x.getAttribute("hash_bookmark"),
+          start_at_slide = x.getAttribute("start_at_slide") || 0,
+          start_zoom = x.getAttribute("start_zoom"),
+          src = x.getAttribute("src") || x.getAttribute("data-src"),
+          url = !spreadsheet_id ? src : '//cdn.knightlab.com/libs/timeline3/latest/embed/index.html?source=' + spreadsheet_id + '&font=' + font + '&maptype=' + map + '&lang=' + lang + '&start_at_end=' + start_at_end + '&hash_bookmark=' + hash_bookmark + '&start_at_slide=' + start_at_slide + '&initial_zoom=' + start_zoom + '&height=' + height;
+
+      return '<iframe src="' + url + '" width="' + width + '" height="' + height + '" frameborder="0" allowtransparency allowfullscreen></iframe>';
+    });
+  },
+  "fallback": function () {
+    "use strict";
+    var id = 'timelinejs';
+    tarteaucitron.fallback(['timelinejs-canvas','timelinejs-wrapper','timeline3-wrapper', 'timeline-canvas'], function (elem) {
+      elem.style.width = elem.getAttribute('width') + 'px';
+      elem.style.height = elem.getAttribute('height') + 'px';
+      return tarteaucitron.engage(id);
+    });
+  }
+};
+
+// twitter (PMV6)
+tarteaucitron.services.twitter = {
+    "key": "twitter",
+    "type": "social",
+    "name": "Twitter",
+    "uri": "https://support.twitter.com/articles/20170514",
+    "needConsent": true,
+    "cookies": [],
+    "js": function () {
+      "use strict";
+      var elems = document.querySelectorAll('.bouton-partage-tw-wrapper'), len = elems.length;
+      for (var i=0; i<len; i++){
+        var noreload = elems[i].querySelector('.pmv6-tc-modal');if(noreload) {noreload.parentNode.removeChild(noreload); elems[i].innerHTML = elems[i].innerHTML.split('Autoriser').join('');}//TEMP Line for not showing popup when no reload
+
+        elems[i].style.cssText = 'display:inline !important';
+        var btn = elems[i].querySelector('.bouton-partage');
+        if(btn){
+          var fclass = btn.classList;
+          if(fclass && fclass.value.indexOf('bouton-partage-twitter') > -1)
+            controller.register('popup', btn);
+        }
+      }
+    },
+    "fallback": function () {
+        "use strict";
+        var id = 'twitter';
+        tarteaucitron.fallback(['tacTwitter', 'bouton-partage-tw-wrapper'], function(x) {
+          x.style.cssText = 'display:inline !important';
+          return tarteaucitron.engage(id);
+        });
+    }
+};
+
+// twitter embed
+tarteaucitron.services.twitterembed = {
+  "key": "twitterembed",
+  "type": "social",
+  "name": "Twitter (cards)",
+  "uri": "https://support.twitter.com/articles/20170514",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    var uniqIds = [],
+        i,
+        e,
+        html;
+    tarteaucitron.fallback(['twitterembed-canvas','twitter-tweet', 'twitter-tweet-rendered'], function (x) {
+      var uniqId = '_' + Math.random().toString(36).substr(2, 9);
+      uniqIds.push(uniqId);
+      html = '<div id="' + uniqId + '" ';
+      html += 'tweetid="' + x.getAttribute('tweetid') + '" ';
+      html += 'theme="' + x.getAttribute('theme') + '" ';
+      html += 'cards="' + x.getAttribute('cards') + '" ';
+      html += 'conversation="' + x.getAttribute('conversation') + '" ';
+      html += 'data-width="' + x.getAttribute('data-width') + '" ';
+      html += 'data-align="' + x.getAttribute('data-align') + '" ';
+      html += '></div>';
+      return html;
+    });
+
+    tarteaucitron.addScript('//platform.twitter.com/widgets.js', 'twitter-wjs', function () {
+      for (i = 0; i < uniqIds.length; i += 1) {
+        e = document.getElementById(uniqIds[i]);
+        twttr.widgets.createTweet(
+            e.getAttribute('tweetid'),
+            e,
+            {
+              theme: e.getAttribute('theme'),
+              cards: e.getAttribute('cards'),
+              conversation: e.getAttribute('conversation'),
+              lang: tarteaucitron.getLanguage(),
+              dnt: true,
+              width: e.getAttribute('data-width'),
+              align: e.getAttribute('data-align')
+            }
+        );
+      }
+    });
+  },
+  "fallback": function () {
+    "use strict";
+    var id = 'twitterembed';
+    tarteaucitron.fallback(['twitterembed-canvas','twitter-tweet', 'twitter-tweet-rendered'], function (elem) {
+      elem.style.width = elem.getAttribute('data-width') + 'px';
+      return tarteaucitron.engage(id);
+    });
+  }
+};
+
+// twitter timeline
+tarteaucitron.services.twittertimeline = {
+  "key": "twittertimeline",
+  "type": "social",
+  "name": "Twitter (timelines)",
+  "uri": "https://support.twitter.com/articles/20170514",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    tarteaucitron.fallback(['tacTwitterTimelines'], '');
+    tarteaucitron.addScript('//platform.twitter.com/widgets.js', 'twitter-wjs');
+  },
+  "fallback": function () {
+    "use strict";
+    var id = 'twittertimeline';
+    tarteaucitron.fallback(['tacTwitterTimelines'], tarteaucitron.engage(id));
+  }
+};
+
+// Wemap
+tarteaucitron.services.wemap = {
+  "key": "wemap",
+  "type": "api",
+  "name": "Wemap",
+  "uri": "https://www.getwemap.com/privacy-policy",
+  "needConsent": true,
+  "cookies": [],
+  "js": function () {
+    "use strict";
+    tarteaucitron.fallback(['wemap-wrapper'], function (x) {
+      var url =  x.getAttribute("src") || x.getAttribute("data-src"),
+          width = x.getAttribute("width") || x.getAttribute("data-width") || "100%",
+          height = x.getAttribute("height") ||  x.getAttribute("data-height") || "100%",
+          style = x.getAttribute('style') ||  x.getAttribute("data-style") || "",
+          bottom = x.getAttribute('data-bottom') || "70%";
+      return '<div class="video-wrapper" style="padding-bottom:' + bottom + '"><iframe src="' + url + '" width="' + width + '" height="' + height + '" style="' + style +'" frameborder="0" scrolling="no" allowtransparency allowfullscreen></iframe></div>';
+    });
+  },
+  "fallback": function () {
+    "use strict";
+    var id = 'wemap';
+    tarteaucitron.fallback(['wemap-wrapper'], function (elem) {
+      return tarteaucitron.engage(id);
+    });
+  }
+};
+
+// youtube (PMV6)
+tarteaucitron.services.youtube = {
+    "key": "youtube",
+    "type": "video",
+    "name": "YouTube",
+    "uri": "https://www.google.fr/intl/fr/policies/privacy/",
+    "needConsent": true,
+    "cookies": ['VISITOR_INFO1_LIVE', 'YSC', 'PREF', 'GEUP'],
+    "js": function () {
+        "use strict";
+        tarteaucitron.fallback(['youtube_player' , 'youtube-player', 'youtube-wrapper'], function (x) {
+            var video_id = x.getAttribute("videoID"),
+                video_src = x.getAttribute("src") || x.getAttribute("data-src"),
+                video_url = video_id ? '//www.youtube-nocookie.com/embed/' + video_id : video_src,
+                video_width = x.getAttribute("width"),
+                frame_width = 'width=',
+                video_height = x.getAttribute("height"),
+                frame_height = 'height=',
+                video_frame,
+                params = 'theme=' + x.getAttribute("theme") + '&rel=' + x.getAttribute("rel") + '&controls=' + x.getAttribute("controls") + '&showinfo=' + x.getAttribute("showinfo") + '&autoplay=' + x.getAttribute("autoplay");
+            
+            if (video_url === undefined) {
+                return "";
+            }
+            if (video_width !== undefined) {
+                frame_width += '"' + video_width + '" ';
+            } else {
+                frame_width += '"" ';
+            }
+            if (video_height !== undefined) {
+                frame_height +=  '"' + video_height + '" ';
+            } else {
+                frame_height += '"" ';
+            }
+            video_frame = '<iframe type="text/html" ' + frame_width + frame_height + ' src="' + video_url + '?' + params + '" frameborder="0"></iframe>';
+            return video_frame;
+        });
+    },
+    "fallback": function () {
+        "use strict";
+        var id = 'youtube';
+        tarteaucitron.fallback(['youtube_player' , 'youtube-player', 'youtube-wrapper'], function (elem) {
+            elem.style.width = elem.getAttribute('width') + 'px';
+            elem.style.height = elem.getAttribute('height') + 'px';
+            return tarteaucitron.engage(id);
+        });
+    }
+};
+
+

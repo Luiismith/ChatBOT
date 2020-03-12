@@ -1,0 +1,37 @@
+/*global define*/
+define(function () {
+    'use strict';
+    function formatHmsTime(seconds) {
+        var secNum = parseInt(seconds, 10);
+        var hours   = Math.floor(secNum / 3600);
+        var minutes = Math.floor((secNum - (hours * 3600)) / 60);
+        var remainingSeconds = secNum - (hours * 3600) - (minutes * 60);
+        var formattedHours = "", formattedMinutes = "", formattedSeconds = "";
+
+        if (hours > 0) {
+            formattedHours = hours.toString();
+            if (hours < 10) {
+                formattedHours = "0" + formattedHours;
+            }
+            formattedHours += "h";
+        }
+        if (minutes > 0) {
+            formattedMinutes = minutes.toString();
+            if (minutes < 10) {
+                formattedMinutes = "0" + formattedMinutes;
+            }
+            formattedMinutes += "m";
+        }
+        formattedSeconds = remainingSeconds.toString();
+        if (remainingSeconds < 10) {
+            formattedSeconds = "0" + formattedSeconds;
+        }
+        formattedSeconds += "s";
+
+        return formattedHours + formattedMinutes + formattedSeconds;
+    }
+
+    return {
+        formatHmsTime: formatHmsTime
+    };
+});

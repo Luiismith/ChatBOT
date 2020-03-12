@@ -1,0 +1,60 @@
+/*global define*/
+define([
+    "jquery",
+    "app/model/player",
+    "app/model/video",
+    "app/collection/relatedVideos"
+], function ($, playerModel, videoModel, relatedVideosModel) {
+    'use strict';
+
+    var $endScreen,
+        MAX_RELATED_VIDEOS = 3;
+
+    function onPlayerScreenChanged(event, currentScreen) {
+        if ("end" === currentScreen) {
+            relatedVideosModel.loadRelatedVideos(videoModel);
+            $endScreen.fadeIn(1000);
+        } else {
+            $endScreen.fadeOut(500, function () {
+                $endScreen.find(".related-video-item").remove();
+            });
+        }
+    }
+
+    function getPlayVideoHandler() {
+        return function () {
+            videoModel.load($(this).data("videoTeaser").videoId);
+            playerModel.changeScreen("video");
+        };
+    }
+
+    function displayRelatedVideos(event, relatedVideos) {
+        var $template = $endScreen.find(".related-video.template"),
+            $relatedVideo,
+            i;
+        if (relatedVideos.length == 0) {
+            videoModel.load(videoModel.assetId);
+            playerModel.changeScreen("video");
+        } else {
+            for (i = 0; i < Math.min(relatedVideos.length, MAX_RELATED_VIDEOS); i += 1) {
+                $relatedVideo = $template.clone(true);
+                $relatedVideo.removeClass("template hide")
+                    .addClass("related-video-item")
+                    .find("img")
+                    .attr("src", relatedVideos[i].smallThumbnailUrl);
+                $relatedVideo.find("p.title").text(relatedVideos[i].title);
+                $relatedVideo.data("videoTeaser", relatedVideos[i]);
+                $relatedVideo.on("click", getPlayVideoHandler());
+                $relatedVideo.appendTo($template.parent());
+            }
+        }
+    }
+
+    return {
+        initialize: function () {
+            $endScreen = $("#end-screen");
+            $(playerModel).on("player_screen_changed", onPlayerScreenChanged);
+            $(relatedVideosModel).on("related_videos_loaded", displayRelatedVideos);
+        }
+    };
+});

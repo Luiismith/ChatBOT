@@ -1,0 +1,37 @@
+/*global define*/
+define([
+    "app/view/header",
+    "app/view/menuSubtitles",
+    "app/view/videoScreen",
+    "app/view/endScreen",
+    "app/view/panel",
+    "app/model/player",
+    "app/model/video",
+    "app/metric/tracking"
+],
+    function (header, menuSubtitles, videoScreen, endScreen, panel, playerModel, videoModel, tracking) {
+        return {
+            videoId: null,
+            videoObject: null,
+            endScreenEnabled: true,
+            trackingType: null,
+            initialize: function() {
+                menuSubtitles.initialize();
+                header.initialize();
+                videoScreen.initialize();
+                endScreen.initialize();
+                panel.initialize();
+                tracking.initialize();
+                if (null !== this.trackingType) {
+                    tracking.type = this.trackingType;
+                }
+
+                videoModel.videoId = this.videoId;
+                if (this.autoPlay) {
+                    videoModel.autoPlay = true;
+                }
+                videoModel.setData(this.videoObject);
+            }
+        }
+    }
+);

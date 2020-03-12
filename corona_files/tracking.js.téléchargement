@@ -1,0 +1,194 @@
+/*global define*/
+/*jslint browser:true*/
+define([
+    "require",
+    "jquery",
+    "app/model/player",
+    "app/model/video",
+    "lib/dateFormatter"
+], function(require, $, playerModel, videoModel, dateFormatter){
+    'use strict';
+
+    // constantes
+    var PLAYER_VERSION = 3,
+        REFRESH_FREQUENCY = 15;
+
+    var domain = "undefined",
+        contentLabel,
+        targetPosition = null,
+        that,
+        Titlev;
+
+    function onVideoChanged() {
+        contentLabel =  "videos::" + encodeURIComponent(cleanString(videoModel.title));
+        Titlev = contentLabel;
+        var xt_multc = "&x1=videos&x4=" + dateFormatter.formatDateCompact(videoModel.date);
+        /*
+        var position = window.xtparam.indexOf("&x1=");
+        if (position > 0) {
+            window.xtparam = window.xtparam.substr(0, position) + xt_multc;
+        }
+        */
+    }
+
+    function onVideoStateChanged(event, state) {
+        switch (state) {
+            case "play":
+                sendXtRichMedia("play");
+                break;
+            case "pause":
+                sendXtRichMedia("pause");
+                break;
+            case "complete":
+                sendXtRichMedia("stop");
+                break;
+        }
+    }
+
+    function sendXtRichMedia(action) {
+        try {
+            curl(["lib/tagcommander"], function (smarttag) {
+                if (null === targetPosition) {
+                    targetPosition = videoModel.getPosition();
+                }
+                var atStreamingIdentifiers = [
+                    {"id":8, "bitrate":22},
+                    {"id":9, "bitrate":96},
+                    {"id":10, "bitrate":112},
+                    {"id":11, "bitrate":300},
+                    {"id":12, "bitrate":500},
+                    {"id":13, "bitrate":1000},
+                    {"id":14, "bitrate":800},
+                    {"id":15, "bitrate":900},
+                    {"id":16, "bitrate":1200},
+                    {"id":17, "bitrate":1500},
+                    {"id":18, "bitrate":2000},
+                    {"id":19, "bitrate":2030}
+                ];
+                var currentStreamingIdentifier = null;
+                if (videoModel.getBitRate()) {
+                    var currentBitRate = videoModel.getBitRate() * .001;
+                    for (var i=atStreamingIdentifiers.length - 1; i>=0; i--) {
+                        if (currentBitRate >= atStreamingIdentifiers[i].bitrate) {
+                            currentStreamingIdentifier = atStreamingIdentifiers[i].id;
+                            break;
+                        }
+                    }
+                }
+                smarttag.xt_rm("video&plyr=" + PLAYER_VERSION, // (A)
+                    videoModel.atInternetCode, // code xtn2 propre à la video (B)
+                    contentLabel, // (C)
+                    action, // (D)
+                    null, // (E)
+                    REFRESH_FREQUENCY, // (F)
+                    Math.round(videoModel.duration), // (G)
+                    "rmp=" + targetPosition + "&rmpf=0&rmbufp=" + videoModel.getPosition(), // (H)
+                    null, // (I)
+                    currentStreamingIdentifier, // identifiant de flux (J)
+                    that.type // localisation int ou ext (K)
+                );
+                targetPosition = null;
+            });
+        } catch(error) {
+            console.log(error, error.message);
+            throw error;
+        }
+    }
+
+    function sendXtClick(target, type, action) {
+        return;
+        try {
+            curl(["lib/tagcommander"], function (smarttag) {
+              smarttag.xt_click(target, 'C', videoModel.atInternetCode, action, type, null, null, true,contentLabel);
+            });
+        } catch(error) {
+            //console.log(error, error.message);
+            throw error;
+        }
+    }
+
+    function detectDomain() {
+        var referrerElements = [];
+        if (window.document.referrer) {
+            referrerElements = window.document.referrer.match(/^https?:\/\/(w+\.)?([^\/:]+)/i);
+        }
+        if (3 === referrerElements.length) {
+            domain = referrerElements[2];
+        }
+    }
+
+    /**
+     * Supprime tous les caractères non alphanumériques ou - _ et espace, afin d'avoir une chaîne
+     * qui puisse être transmise en variable GET
+     * @param String inputString
+     * @returns String
+     */
+    function cleanString(inputString) {
+        var regexps      = [/[éèêë]/gi, /[àâä]/gi, /[ùûü]/gi, /[ôöò]/gi, /[îïì]/gi, /[^a-zA-Z0-9_ ]/gi, /  +/gi];
+        var replacements = ['e',        'a',       'u',       'o',       'i',       '',                 ' '];
+        for (var i = 0; i < regexps.length; i += 1) {
+            inputString = inputString.replace(regexps[i], replacements[i]);
+        }
+        return inputString;
+    }
+
+    return {
+        initialize: function() {
+            that = this;
+            $(videoModel).on("video_changed", onVideoChanged);
+            $(videoModel).on("video_state_changed", onVideoStateChanged);
+            $("#end-screen .related-video").on("click", function () {
+                sendXtClick(this, "N", "Fonction::Video_associee");
+            });
+            $("#playlist li.instance").on("click", function () {
+                sendXtClick(this, "N", "Fonction::Playlist");
+            });
+            $("#btn-header-facebook").on("click", function () {
+                sendXtClick(this, "A", "Fonction::Export_Reseau_Social::Facebook");
+                sendXtRichMedia("share");
+            });
+            $("#btn-header-twitter").on("click", function () {
+                sendXtClick(this, "A", "Fonction::Export_Reseau_Social::Twitter");
+                sendXtRichMedia("share");
+            });
+            $("#btn-header-export").on("click", function () {
+                sendXtClick(this, "A", "Fonction::Utilisation_embed");
+                sendXtRichMedia("share");
+            });
+            $("#btn-header-info").on("click", function () {
+                sendXtClick(this, "A", "Fonction::Informations");
+            });
+            $("#btn-replay-video").on("click", function () {
+                sendXtClick(this, "A", "Fonction::Rejouer");
+            });
+            $("a.info-link").on("click", function () {
+                sendXtClick(this, "N", "Fonction::Lien");
+            });
+            $(videoModel).on("video_full_screen_enter", function () {
+                sendXtClick(this, "A", "Fonction::Plein_Ecran");
+            });
+            $(videoModel).on("video_seek_request", function (event, time) {
+                targetPosition = time;
+                sendXtRichMedia("move");
+            });
+            $(videoModel).on("video_volume", function () {
+                sendXtClick(this, "A", "Fonction::Son");
+            });
+            $(videoModel).on("subtitles_changed", function (event, subtitles) {
+                var action;
+                if (null === subtitles) {
+                    action = "Desactivation";
+                } else {
+                    action = "Activation";
+                }
+                sendXtClick(this, "A", "Fonction::Sous-titrage::" + action);
+            });
+            $(videoModel).on("video_chapter_selected", function (event, time, chapterName) {
+                sendXtClick(this, "N", "Chapitrage::" + contentLabel + "::" + cleanString(chapterName));
+            });
+
+            detectDomain();
+        },
+        type: "int"
+    }
+});

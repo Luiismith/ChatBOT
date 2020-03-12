@@ -1,0 +1,86 @@
+(function($){
+  $(document).ready(function(){
+
+    tarteaucitron.init({
+      "hashtag": "#tarteaucitron", /* Ouverture automatique du panel avec le hashtag */
+      "highPrivacy": true, /* désactiver le consentement implicite (en naviguant) ? */
+      "orientation": "bottom", /* le bandeau doit être en haut (top) ou en bas (bottom) ? */
+      "adblocker": false, /* Afficher un message si un adblocker est détecté */
+      "showAlertSmall": false, /* afficher le petit bandeau en bas à droite ? */
+      "cookieslist": true, /* Afficher la liste des cookies installés ? */
+      "removeCredit": true /* supprimer le lien vers la source ? */,
+    });
+
+    var services = Drupal.settings.pmv6tarteaucitron.services;
+
+    $.each(services, function (key, value) {
+      if(value){
+        (tarteaucitron.job = tarteaucitron.job || []).push(key);
+      }
+    });
+
+    window.addEventListener("tarteaucitron_loaded", function(e){
+      var footerlink = $('.rf-footer-left').find('li:last-child');
+      if(footerlink.length > 0) {
+        var linktext = (window.location.toString().indexOf('/en/') !== -1) ? Drupal.t('Cookies management ', {}, {context: "contenu"}) : Drupal.t('Cookies management', {}, {context: "contenu"});
+        footerlink.before('<li><a href="javascript:void(0)" onclick="javascript:tarteaucitron.userInterface.openPanel();return tag.click.send({elem:this, name:\'tc_personnaliser\', level2:\'8\', chapter1:\'footer\', chapter2:\'gestion_des_cookies\', type:\'navigation\'});" data-smarttag-click="%7B%22name%22:%22personnaliser%22,%22level2%22:%228%22,%22chapter1%22:%22footer%22,%22chapter2%22:%22gestion_des_cookies%22,%22type%22:%22action%22%7D">' + linktext +'</a></li>');
+      }
+      var btnCookieBarRespondAll = $('#tarteaucitronAllAllowed, #facebookAllowed, #twitterAllowed');
+      if(btnCookieBarRespondAll.length> 0){
+        btnCookieBarRespondAll.each(function(){
+          $(this).on('click',function() {
+            //tarteaucitron.reloadThePage = true;
+          });
+        });
+        var btnCookieBannerAll = $('#tarteaucitronOpenPanel');
+        if(btnCookieBannerAll.length> 0){
+          $(btnCookieBannerAll).on('click',function() {
+            //window.location.reload();
+          });
+
+        }
+      }
+    });
+
+    showMod =  function (id){
+      if(document.getElementById(id)){
+        $.colorbox({width:"50%", height: '30%', inline: true, href:"#" + id, scrolling: false, iframe : false, className: 'cbox-tc-share'});
+      }
+    };
+
+    $(document).ajaxComplete(function (event, xhr, ajaxsettings) {
+      if(ajaxsettings.url == "/ajax/encart"){
+        return;
+      }
+
+      if (tarteaucitron.job !== undefined && !isEmpty(tarteaucitron.services)) {
+        var ajaxTimer = ajaxsettings.url.indexOf("/mosaique/medias-a-partager") !== -1 ? 1200 : 0;
+        setTimeout(function(){
+          var s = tarteaucitron.services;
+          for (var index = 0; index < tarteaucitron.job.length; index += 1) {
+            var service = s[tarteaucitron.job[index]];
+            if(service && !service.executeOnce){
+              if (tarteaucitron.state[service.key]) {
+                service.js();
+              }
+              else {
+                if(service.fallback)
+                  service.fallback();
+              }
+            }
+          }
+        },ajaxTimer);
+      }
+    });
+});
+
+function isEmpty(obj) {
+  for(var prop in obj) {
+    if(obj.hasOwnProperty(prop)){
+      return false;
+    }
+  }
+  return JSON.stringify(obj) === JSON.stringify({});
+}
+})(jQuery);
+

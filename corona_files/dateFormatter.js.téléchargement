@@ -1,0 +1,70 @@
+/*global define*/
+define(function () {
+    'use strict';
+    /**
+     * Format a date in french: 12 novembre 2013 for example
+     * @param {Date} date
+     * @returns {String}
+     */
+    function formatDateLong(date) {
+        if(!parent.Drupal){
+          var months = [
+            'janvier',
+            'fevrier',
+            'mars',
+            'avril',
+            'mai',
+            'juin',
+            'juillet',
+            'aout',
+            'septembre',
+            'octobre',
+            'novembre',
+            'decembre'
+          ];
+        }
+        else{
+          var months = [
+            parent.Drupal.t('january'),
+            parent.Drupal.t('february'),
+            parent.Drupal.t('march'),
+            parent.Drupal.t('april'),
+            parent.Drupal.t('may'),
+            parent.Drupal.t('june'),
+            parent.Drupal.t('july'),
+            parent.Drupal.t('august'),
+            parent.Drupal.t('september'),
+            parent.Drupal.t('october'),
+            parent.Drupal.t('november'),
+            parent.Drupal.t('december')
+          ];
+        }
+        date.getFullYear();
+        return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
+    }
+
+    /**
+     * format date as YYYYMMDD
+     * @param {Date} date
+     */
+    function formatDateCompact(date) {
+        var dateString = date.getFullYear();
+        if (date.getMonth() < 9) {
+            dateString += "0" + (date.getMonth()+1);
+        } else {
+            dateString += date.getMonth()+1;
+        }
+        if (date.getDate() < 10) {
+            dateString += "0" + date.getDate();
+        } else {
+            dateString += date.getDate();
+        }
+
+        return dateString;
+    }
+
+    return {
+        formatDateLong: formatDateLong,
+        formatDateCompact: formatDateCompact
+    };
+});
