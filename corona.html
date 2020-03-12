@@ -1886,11 +1886,14 @@ jQuery.extend(Drupal.settings, {"basePath":"\/","pathPrefix":"","ajaxPageState":
 
     <script type="text/javascript">
 
+    		//Création et déclaration des element 
 			let divChat = document.createElement("div");
 			let champText = document.createElement("input");
 			let boutonChat = document.createElement("button");
 			let reponse = document.createElement("p");
+			let question, reponses;
 
+			//Création du texte dans le bouton 
 			boutonChat.innerText = "Envoyer votre question";
 			divChat.append(champText, boutonChat);
 			document.body.append(divChat);
@@ -1898,21 +1901,24 @@ jQuery.extend(Drupal.settings, {"basePath":"\/","pathPrefix":"","ajaxPageState":
 			divChat.style.top="0";
 
 
-			let question, reponses;
-			var bibliothèque = ['bonjour', 'bonsoir', 'salut', 'hello', 'good evening', 'hi'];
-			var bibliothèqueReponse = ['bonjour réponse', 'bonsoir réponse', 'salut réponse', 'hello réponse', 'good evening réponse', 'hi réponse'];
+			//Tableau des question auquels le chat peut répondre 
+			var bibliothequeQuestion = ['bonjour', 'bonsoir', 'salut', 'hello', 'good evening', 'hi', 'ça va ?', 'comment allez vous ?', 'how are you ?', 'are you fine ?'];
+			//Tableau des réponses 
+			var bibliothequeReponse = ['bonjour réponse', 'bonsoir réponse', 'salut réponse', 'hello réponse', 'good evening réponse', 'hi réponse', 'ça va ? réponse', 'comment allez vous ? réponse', 'how are you ? réponse', 'are you fine ? réponse'];
 
-
+			//Au clique du bouton
 			boutonChat.addEventListener('click', function(){
 
 				  question = champText.value;
-				  reponses = [];
 
-				  for (let i=0; i < bibliothèque.length(); i++){
-				  	if (question.includes(bibliothèque[i])) {
-					    reponses = bibliothèqueReponse[i]
+				  for (let i=0; i<bibliothequeQuestion.length; i++){
+				  	if (question.includes(bibliothequeQuestion[i])) {
+
+					    reponses = bibliothequeReponse[i]
 					    break;
+
 					} else {
+
 					    reponses = "Bonjour, veuillez nous poser une question";
 					}
 				}
