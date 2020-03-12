@@ -1892,26 +1892,32 @@ jQuery.extend(Drupal.settings, {"basePath":"\/","pathPrefix":"","ajaxPageState":
 			let reponse = document.createElement("p");
 
 			boutonChat.innerText = "Envoyer votre question";
-			divChat.appendChild(boutonChat);
-
-			document.body.append(champText);
+			divChat.append(champText, boutonChat);
 			document.body.append(divChat);
+			divChat.style.position="absolute";
+			divChat.style.top="0";
+
 
 			let question, reponses;
+			var bibliothèque = ['bonjour', 'bonsoir', 'salut', 'hello', 'good evening', 'hi'];
+			var bibliothèqueReponse = ['bonjour réponse', 'bonsoir réponse', 'salut réponse', 'hello réponse', 'good evening réponse', 'hi réponse'];
+
 
 			boutonChat.addEventListener('click', function(){
 
 				  question = champText.value;
 				  reponses = [];
 
-				  if (question) {
-				    reponses = "Nous allons vous repondre";
-				    alert(reponses);
-				  } else {
-				    reponses = "Bonjour, veuillez nous posser une question";
-				    alert(reponses);
-				  }
+				  for (let i=0; i < bibliothèque.length(); i++){
+				  	if (question.includes(bibliothèque[i])) {
+					    reponses = bibliothèqueReponse[i]
+					    break;
+					} else {
+					    reponses = "Bonjour, veuillez nous poser une question";
+					}
+				}
 				  
+				  document.body.append(reponses);
 			}); 
 
 	</script>
