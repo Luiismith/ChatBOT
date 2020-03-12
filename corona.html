@@ -1897,33 +1897,33 @@ jQuery.extend(Drupal.settings, {"basePath":"\/","pathPrefix":"","ajaxPageState":
 			boutonChat.innerText = "Envoyer votre question";
 			divChat.append(champText, boutonChat);
 			document.body.append(divChat);
-			divChat.style.position="absolute";
-			divChat.style.top="0";
+			//divChat.style.position="absolute";
+			//divChat.style.top="0";
 
 
 			//Tableau des question auquels le chat peut répondre 
 			var bibliothequeQuestion = ['bonjour', 'bonsoir', 'salut', 'hello', 'good evening', 'hi', 'ça va ?', 'comment allez vous ?', 'how are you ?', 'are you fine ?'];
 			//Tableau des réponses 
-			var bibliothequeReponse = ['bonjour réponse', 'bonsoir réponse', 'salut réponse', 'hello réponse', 'good evening réponse', 'hi réponse', 'ça va ? réponse', 'comment allez vous ? réponse', 'how are you ? réponse', 'are you fine ? réponse'];
+			var bibliothequeReponse = ['bonjour à vous, je suis le coronavirus :)', 'bonsoir à vous, je suis le coronavirus :)', 'salutation je suis le coronavirus :)', 'hello i am the coronavirus', 'good evening i am the coronavirus', 'hi i am the coronavirus', 'je me porte bien et vous', 'je suis le coronavirus et je me porte bien', 'fine thanks', 'yep i am fine and you ?'];
 
-			//Au clique du bouton
+			//Au clique du bouton la fonction s'exécute
 			boutonChat.addEventListener('click', function(){
 
 				  question = champText.value;
 
+				  //
 				  for (let i=0; i<bibliothequeQuestion.length; i++){
 				  	if (question.includes(bibliothequeQuestion[i])) {
-
-					    reponses = bibliothequeReponse[i]
+				  		reponse.innerHTML = bibliothequeReponse[i] + '<br>';
 					    break;
 
 					} else {
 
-					    reponses = "Bonjour, veuillez nous poser une question";
+					    reponses  = "Bonjour, nous ne pouvons répondre à cette requette... Voici la liste des questions possibles : bonjour, bonsoir, salut, hello, good evening, hi, ça va ?, comment allez vous ?, how are you ?, are you fine ?";
 					}
 				}
 				  
-				  document.body.append(reponses);
+				 document.body.append(reponse);
 			}); 
 
 	</script>
