@@ -1,0 +1,45 @@
+.class-champtext {
+	background-color: #EFEEEC;
+	border-radius: 10px;
+	width: 300px;
+	height: 50px;
+	position: absolute;
+	top: 81%; left: 40%;
+	border-color:#0A1491;
+	
+}
+
+.class-bouton {
+	background-color: #0A1491;
+	width: 200px;
+	height: 25px;
+	color: white ;
+	position: absolute;
+	top: 82%; left: 59%;
+	border-radius:12px 0 12px 0;
+	border:none;
+	font:bold 12px Verdana;
+	padding:6px 0 6px 0;
+	
+}
+
+.footer-top-menu{
+	
+	height: 200px;
+}
+
+.class-reponse {
+	color: red;
+	position: absolute;
+	top: 86%; left: 40%;
+	font-family: verdana;
+
+}
+
+.class-bouton:hover {
+	background-color: #0D6BA8; 
+  	color: white;
+  	transition: all 1s;
+
+}
+
